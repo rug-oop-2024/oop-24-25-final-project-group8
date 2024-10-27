@@ -109,15 +109,6 @@ In this section you will focus on building and testing the core functionality of
 
 **Remember to add type hints and docstrings**
 
-- `ML/detect-features`: Implement the function `autoop.functional.feature.detect_feature_types`. This is covered in the tests. 
-- `ML/artifact`: Implement the artifact class in `autoop.core.ml.artifact`.
-- `ML/feature`: Implement the feature class in `autoop.core.ml.feature`.
-- `ML/metric`: Implement the metric class in `autoop.core.ml.metric` with the `__call__` method.
-- `ML/metric/extensions`: add at 6 metrics, 3 must be suitable for `classification`. Compulsory metrics to be implemented are **Accuracy** for classification and **Mean Squared Error** for regression. You are **not** allowed to use facades/wrappers here, you should implement the metric using libraries such as `numpy`.
-- `ML/model`: implement the base model class in `autoop.core.ml.model`.
-- `ML/model/extensions`: Implement at least 3 classification models and 3 regression models. You may use the facade pattern or wrappers on existing libraries.
-- `ML/pipeline/evaluation`: Extend and modify the `execute` function to return the metrics both on the evaluation and training set.
-
 Make sure after implementing your classes you pass the respective tests. You will have to read existing implementation to understand how you need to implement your classes which is quite common working in a team or a company.
 
 # Part II: Building the streamlit app

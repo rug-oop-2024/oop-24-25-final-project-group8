@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 import pickle
 
 from autoop.core.ml.artifact import Artifact
@@ -100,24 +100,61 @@ Pipeline(
         Y = self._train_y
         self._model.fit(X, Y)
 
-    def _evaluate(self):
-        X = self._compact_vectors(self._test_X)
-        Y = self._test_y
-        self._metrics_results = []
+    def _evaluate(self, X: np.ndarray, Y: np.ndarray) -> List[tuple]:
+        """
+        Evaluate the model on the given data and compute metrics.
+        :param X: Input data (features).
+        :param Y: Target data (ground truth).
+        :return: List of tuples containing the metric and the result.
+        """
+        metrics_results = []
         predictions = self._model.predict(X)
         for metric in self._metrics:
             result = metric.evaluate(predictions, Y)
-            self._metrics_results.append((metric, result))
-        self._predictions = predictions
+            metrics_results.append((metric, result))
+        return metrics_results
 
-    def execute(self):
+    def execute(self) -> Dict[str, List[tuple]]:
+        """
+        Execute the machine learning pipeline by performing preprocessing, 
+        splitting the data, training the model, and evaluating the model 
+        on both the training and test datasets.
+        
+        The pipeline performs the following steps:
+        - Preprocesses the input features and target feature.
+        - Splits the data into training and testing sets based on the specified split ratio.
+        - Trains the model on the training data.
+        - Evaluates the model's performance on both the training and test datasets.
+        - Returns the evaluation metrics for both sets.
+        
+        Returns:
+            Dict[str, List[tuple]]: A dictionary containing the evaluation metrics
+            for the training and test sets. Each entry in the dictionary has the 
+            following structure:
+                - "train_metrics": List of tuples, each containing a metric and its result for the training set.
+                - "test_metrics": List of tuples, each containing a metric and its result for the test set.
+        """
+        # Preprocess and split data
         self._preprocess_features()
         self._split_data()
+
+        # Train the model
         self._train()
-        self._evaluate()
+
+        # Evaluate on training data
+        train_X = self._compact_vectors(self._train_X)
+        train_y = self._train_y
+        train_metrics_results = self._evaluate(train_X, train_y)
+
+        # Evaluate on test data (evaluation data)
+        test_X = self._compact_vectors(self._test_X)
+        test_y = self._test_y
+        test_metrics_results = self._evaluate(test_X, test_y)
+
+        # Return the metrics for both training and test sets
         return {
-            "metrics": self._metrics_results,
-            "predictions": self._predictions,
+            "train_metrics": train_metrics_results,
+            "test_metrics": test_metrics_results,
         }
         
 
