@@ -33,7 +33,7 @@ def detect_feature_types(dataset: Dataset) -> List[Feature]:
             raise ValueError(f"Feature {feature_name} contains no non-None values to determine type")
         
         # Create the Feature object with the detected type
-        feature = Feature(name=feature_name, feature_type=feature_type)
+        feature = Feature(name=feature_name, type=feature_type)
         features.append(feature)
     
     return features

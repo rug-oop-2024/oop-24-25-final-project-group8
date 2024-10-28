@@ -4,6 +4,8 @@ from typing import Dict, Tuple, List, Union
 
 from autoop.core.storage import Storage
 
+import os
+
 class Database():
 
     def __init__(self, storage: Storage):
@@ -96,8 +98,7 @@ class Database():
         """Load the data from storage"""
         self._data = {}
         for full_key in self._storage.list(""):
-            # Extract only the relevant part of the path (i.e., collection/id)
-            relative_key = os.path.relpath(full_key, self._storage.base_path)
+            relative_key = os.path.relpath(full_key, self._storage._base_path).replace(os.sep, '/')
             parts = relative_key.split("/")
             if len(parts) < 2:
                 print(f"Invalid key format: {relative_key}")
@@ -105,10 +106,8 @@ class Database():
 
             collection, id = parts[-2:]
             data = self._storage.load(f"{collection}/{id}")
-            
-            # Ensure the collection exists in the dictionary
             if collection not in self._data:
                 self._data[collection] = {}
-            
             self._data[collection][id] = json.loads(data.decode())
+
 

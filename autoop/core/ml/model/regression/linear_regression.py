@@ -1,4 +1,6 @@
 from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 from pydantic import PrivateAttr, Field
 from typing import Optional
@@ -25,11 +27,10 @@ class LinearRegressionModel(Model):
         """
         super()._validate_input(observations, ground_truth)
 
-        self._model = LinearRegression(
-            fit_intercept=self.fit_intercept,
-            normalize=self.normalize,
-            copy_X=self.copy_X
-        )
+        if self.normalize:
+            self._model = make_pipeline(StandardScaler(), LinearRegression(fit_intercept=self.fit_intercept, copy_X=self.copy_X))
+        else:
+            self._model = LinearRegression(fit_intercept=self.fit_intercept, copy_X=self.copy_X)
 
         self._model.fit(observations, ground_truth)
 

@@ -110,7 +110,7 @@ Pipeline(
         metrics_results = []
         predictions = self._model.predict(X)
         for metric in self._metrics:
-            result = metric.evaluate(predictions, Y)
+            result = metric(predictions, Y)
             metrics_results.append((metric, result))
         return metrics_results
 

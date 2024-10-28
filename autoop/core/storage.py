@@ -83,8 +83,8 @@ class LocalStorage(Storage):
         # Use glob to list files
         keys = glob(path + "/**/*", recursive=True)
 
-        # Convert full paths to relative paths and normalize slashes
-        relative_keys = [os.path.relpath(key, self._base_path).replace('\\', '/') for key in keys if os.path.isfile(key)]
+        # Convert full paths to relative paths and normalize to forward slashes
+        relative_keys = [os.path.relpath(key, self._base_path).replace(os.sep, '/') for key in keys if os.path.isfile(key)]
         
         return relative_keys
 

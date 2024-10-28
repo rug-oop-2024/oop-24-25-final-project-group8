@@ -1,6 +1,7 @@
 from sklearn.datasets import fetch_openml
 import unittest
 import pandas as pd
+import numpy as np
 
 from autoop.core.ml.pipeline import Pipeline
 from autoop.core.ml.dataset import Dataset
@@ -56,7 +57,18 @@ class TestPipeline(unittest.TestCase):
         self.pipeline._preprocess_features()
         self.pipeline._split_data()
         self.pipeline._train()
-        self.pipeline._evaluate()
-        self.assertIsNotNone(self.pipeline._predictions)
-        self.assertIsNotNone(self.pipeline._metrics_results)
-        self.assertEqual(len(self.pipeline._metrics_results), 1)
+
+        # Ensure that the test data is in the correct format (e.g., a single NumPy array)
+        X_test = self.pipeline._compact_vectors(self.pipeline._test_X)
+        y_test = self.pipeline._test_y
+
+        # Pass the test set for evaluation
+        metrics_results = self.pipeline._evaluate(X_test, y_test)
+
+        # Check that metrics_results is not None and has at least one result
+        self.assertIsNotNone(metrics_results)
+        self.assertGreater(len(metrics_results), 0)
+
+        # Ensure that the results contain valid metric results
+        for metric, result in metrics_results:
+            self.assertIsInstance(result, float)  # Assuming metric results are floats

@@ -12,6 +12,13 @@ import json
 
 class Artifact(BaseModel):
     ASSETS_DIR: str = Field("assets", description="Base directory where artifacts will be stored.")
+    name: str = Field("name", description="Name of Artifact")
+    asset_path: str = Field("asset path", description="Path to asset storage directory")
+    data: Union[bytes, pd.DataFrame, torch.nn.Module, dict] = Field("data of artifact", description="Structure which stores artifacts data")
+    version: str = Field("version", description="Version of artifact")
+
+    class Config:
+        arbitrary_types_allowed = True  # Allow arbitrary types like pd.DataFrame, torch.nn.Module
 
     def save(self, 
              data: Union[bytes, pd.DataFrame, torch.nn.Module, dict], 
