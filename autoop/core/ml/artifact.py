@@ -3,14 +3,14 @@ import base64
 import pandas as pd
 import pickle
 from pydantic import BaseModel, Field, model_validator
-from typing import Union,Optional
+from typing import Union,Optional, Any
 import json
 
 class Artifact(BaseModel):
     name: str = Field(None, description="Name of Artifact")
     id: str = Field(None, description="Unique identifier for the artifact")
     asset_path: str = Field(None, description="Path to asset storage directory")
-    data: Optional[Union[bytes, pd.DataFrame, dict]] = Field(None, description="Structure which stores artifacts data")
+    data: Optional[Any] = Field(None, description="Structure which stores artifacts data")
     type: str = Field("unknown type", description="Data type of the artifact (dataset, model, pipeline etc.)")
     version: str = Field("1.0.0", description="Version of artifact")
     tags: dict = Field(default_factory=dict, description="Set of tags that can be specified by the user for the dataset")

@@ -61,7 +61,7 @@ def display_datasets():
                 col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
                 
                 with col1:
-                    # Display dataset name and version with larger font size
+                    # Display dataset name and version 
                     st.markdown(
                         f"<div style='{row_bg_color} font-size: 20px; font-style: italic;'> {dataset.name} | {dataset.version}</div>", 
                         unsafe_allow_html=True

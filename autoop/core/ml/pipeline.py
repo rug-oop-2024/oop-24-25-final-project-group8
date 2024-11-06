@@ -20,9 +20,10 @@ class Pipeline(Artifact):
                  input_features: List[Feature],
                  target_feature: Feature,
                  split=0.8,
-                 name="pipeline_config"
+                 version="1.0.0",
+                 name="pipeline_config",
                  ):
-        super().__init__(name=name, type="pipeline")
+        super().__init__(name=name, type="pipeline", version=version)
         self._dataset = dataset
         self._model = model
         self._input_features = input_features
@@ -61,14 +62,12 @@ Pipeline(
             # Serialize the entire Pipeline object as a pickle file
             with open(data_path, 'wb') as f:
                 pickle.dump(self, f)
-            print(f"Pipeline object saved as pickle at {data_path}")
 
     @staticmethod
     def load(path: str):
         """Load the Pipeline object from a pickle file."""
         with open(path, 'rb') as f:
             pipeline = pickle.load(f)
-        print(f"Pipeline loaded from {path}")
         return pipeline
 
     @property

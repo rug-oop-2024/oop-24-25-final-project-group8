@@ -114,23 +114,9 @@ Make sure after implementing your classes you pass the respective tests. You wil
 # Part II: Building the streamlit app
 
 In this part you will integrate the library by importing your implemented classes in streamlit pages. **Notice that Tutorial III is designed to give you some knowledge on the functioning of Streamlit**.
-
-- `ST/page/modelling`: Create a page where you will be modelling a pipeline.
-- `ST/modelling/datasets/list`: Load existing datasets using the artifact registry. You can use a select box to achieve this.
-- `ST/modelling/datasets/features`: Detect the features and generate a selection menu for selecting the input features (many) and one target feature. Based on the feature selections, prompt the user with the detected task type (i.e., classification or regression).
-- `ST/modelling/models`: Prompt the user to select a model based on the task type.
-- `ST/modelling/pipeline/split`: Prompt the user to select a dataset split.
-- `ST/modelling/pipeline/metrics`: Prompt the user to select a set of compatible metrics.
-- `ST/modelling/pipeline/summary`: Prompt the user with a beautifuly formatted pipeline summary with all the configurations.
-- `ST/modelling/pipeline/train`: Train the class and report the results of the pipeline.
-
 ## Extra requirements
 
 *Notice: correctly implementing the requirements up to this point will grant 6 points.*
-
-- `ST/modelling/pipeline/save`: Prompt the user to give a name and version for the pipeline and convert it into an artifact which can be saved.
-- `ST/page/deployment`: Create a page where you can see existing saved pipelines.
-- `ST/deployment/load`: Allow the user to select existing pipelines and based on the selection show a pipeline summary.
 - `ST/deployment/predict`: Once the user loads a pipeline, prompt them to provide a CSV on which they can perform predictions.
 
 # Part III: Go beyond

@@ -429,6 +429,7 @@ else:
     """, unsafe_allow_html=True)
 
     pipeline_name = st.text_input("Pipeline Name", value="My_Custom_Pipeline", help="Enter a custom name for the pipeline")
+    pipeline_version = st.text_input("Pipeline Version", value="1.0.0", help="Enter a version for the pipeline")
 
     metrics = [get_metric(metric_name) for metric_name in selected_metrics]
     pipeline = Pipeline(
@@ -438,7 +439,8 @@ else:
                 input_features=selected_input_features_objects,
                 target_feature=selected_target_feature_object,
                 split=train_split,
-                name=pipeline_name 
+                name=pipeline_name, 
+                version=pipeline_version
             )
     
     # Button to save the pipeline
