@@ -1,12 +1,11 @@
 from autoop.core.ml.artifact import Artifact
 from abc import ABC, abstractmethod
 import pandas as pd
+import pickle
+import json
 import io
 
 class Dataset(Artifact):
-
-    def __init__(self, name: str, asset_path: str, data: pd.DataFrame, version: str) -> None:
-        super().__init__(name=name, asset_path=asset_path, data=data, version=version)
 
     @staticmethod
     def from_dataframe(data: pd.DataFrame, name: str, asset_path: str, version: str="1.0.0"):
@@ -25,21 +24,30 @@ class Dataset(Artifact):
             asset_path=asset_path,
             data=csv_data,
             version=version,
+            type="dataset"
         )
         
     def read(self) -> pd.DataFrame:
         """
-        Reads the stored CSV data and returns it as a pandas DataFrame.
-        
-        Returns:
-            pd.DataFrame: The dataset loaded from the CSV.
+        Reads the dataset from its stored format and returns it as a pandas DataFrame.
         """
-        # `self.data` is expected to be the CSV content in bytes (loaded by Artifact class)
-        csv_bytes = self.data
-        csv_string = csv_bytes.decode()
-        return pd.read_csv(io.StringIO(csv_string))
-    
-    def save(self, data: pd.DataFrame) -> bytes:
-        bytes = data.to_csv(index=False).encode()
-        return super().save(bytes)
+        if self.asset_path.endswith(".csv"):
+            # CSV data is directly readable by pandas
+            return pd.read_csv(self.asset_path)
+        elif self.asset_path.endswith(".json"):
+            # JSON data needs to be loaded and then converted to a DataFrame if it's structured as such
+            with open(self.asset_path, 'r') as f:
+                data = json.load(f)
+            return pd.DataFrame(data)
+        elif self.asset_path.endswith(".bin") or isinstance(self.data, bytes):
+            # Assuming binary data represents a CSV encoded in bytes
+            csv_string = self.data.decode() if isinstance(self.data, bytes) else open(self.asset_path, 'rb').read().decode()
+            return pd.read_csv(io.StringIO(csv_string))
+        elif self.asset_path.endswith(".pkl"):
+            # Pickle files are loaded with pickle
+            with open(self.asset_path, 'rb') as f:
+                data = pickle.load(f)
+            return pd.DataFrame(data) if isinstance(data, (pd.DataFrame, dict)) else data
+        else:
+            raise ValueError(f"Unsupported data format for asset path: {self.asset_path}")
     

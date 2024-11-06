@@ -32,7 +32,7 @@ def get_model(model_name: str) -> Model:
         ValueError: If the model_name is not found in any models list.
     """
     
-    if model_name == 'lasso_regression':
+    if model_name == 'linear_regression':
         return LinearRegressionModel()
     elif model_name == 'decision_tree_regressor':
         return DecisionTreeRegressorModel()

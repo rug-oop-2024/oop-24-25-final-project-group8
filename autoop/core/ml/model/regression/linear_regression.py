@@ -12,12 +12,24 @@ class LinearRegressionModel(Model):
     """
     Wrapper around the LinearRegression from scikit-learn.
     """
-
+    
     _model: LinearRegression = PrivateAttr()
 
     fit_intercept: bool = Field(default=True, description="Whether to calculate the intercept for the model.")
     normalize: Optional[bool] = Field(default=False, description="Whether to normalize the input features.")
     copy_X: bool = Field(default=True, description="Whether to copy X (input data) or overwrite it.")
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Initialize _hyperparameters with only fields defined in this class
+        self._hyperparameters = {
+            field_name: getattr(self, field_name)
+            for field_name in self.__fields__.keys()
+            if field_name in self.__annotations__
+        }
+        self.name = "linear regression"
+        self.type = "regression"
+        self._parameters ={}
 
     def fit(self, observations: np.ndarray, ground_truth: np.ndarray) -> None:
         """
@@ -25,6 +37,7 @@ class LinearRegressionModel(Model):
         :param observations: Input data (features).
         :param ground_truth: Target values.
         """
+        self._parameters = {}
         super()._validate_input(observations, ground_truth)
 
         if self.normalize:

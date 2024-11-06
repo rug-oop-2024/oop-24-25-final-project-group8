@@ -1,148 +1,97 @@
-from autoop import Validator
-
 import os
 import base64
 import pandas as pd
 import pickle
-import torch
-from pydantic import BaseModel, Field
-from typing import Union, Optional, List
+from pydantic import BaseModel, Field, model_validator
+from typing import Union,Optional
 import json
 
-
 class Artifact(BaseModel):
-    ASSETS_DIR: str = Field("assets", description="Base directory where artifacts will be stored.")
-    name: str = Field("name", description="Name of Artifact")
-    asset_path: str = Field("asset path", description="Path to asset storage directory")
-    data: Union[bytes, pd.DataFrame, torch.nn.Module, dict] = Field("data of artifact", description="Structure which stores artifacts data")
-    version: str = Field("version", description="Version of artifact")
+    name: str = Field(None, description="Name of Artifact")
+    id: str = Field(None, description="Unique identifier for the artifact")
+    asset_path: str = Field(None, description="Path to asset storage directory")
+    data: Optional[Union[bytes, pd.DataFrame, dict]] = Field(None, description="Structure which stores artifacts data")
+    type: str = Field("unknown type", description="Data type of the artifact (dataset, model, pipeline etc.)")
+    version: str = Field("1.0.0", description="Version of artifact")
+    tags: dict = Field(default_factory=dict, description="Set of tags that can be specified by the user for the dataset")
+    metadata: dict = Field(default_factory=dict, description="Dictionary of meta data that can be specified by the user")
 
     class Config:
         arbitrary_types_allowed = True  # Allow arbitrary types like pd.DataFrame, torch.nn.Module
 
-    def save(self, 
-             data: Union[bytes, pd.DataFrame, torch.nn.Module, dict], 
-             artifact_type: str, 
-             filename: Optional[str] = None, 
-             version: str = "1.0.0", 
-             metadata: Optional[dict] = None, 
-             tags: Optional[list] = None) -> None:
+    @model_validator(mode="before")
+    def generate_id_and_defaults(cls, values):
         """
-        Saves the artifact's data in the assets directory, along with a full JSON structure.
-
-        Args:
-            data: The data to save (e.g., dataset, model).
-            artifact_type: The type of data being saved (e.g., 'Pipeline', 'Dataset', 'Model', etc.).
-            filename: The optional filename to save the artifact with.
-            version: The version of the artifact (default is '1.0.0').
-            metadata: A dictionary of metadata for the artifact (e.g., experiment_id, run_id).
-            tags: Optional list of tags to describe the artifact.
+        Generate a unique ID, asset path, and filename based on given values.
         """
+        # Ensure 'name' and 'version' defaults
+        values['name'] = values.get('name', 'default_name')
+        values['version'] = values.get('version', '1.0.0')
         
-        # Validate input types
-        validator = Validator()
-        validator.validate(data, Union[bytes, pd.DataFrame, torch.nn.Module, dict])
-        validator.validate(artifact_type, str)
-        validator.validate(filename, str)
-        validator.validate(version, str)
-        validator.validate(metadata, dict)
-        validator.validate(tags, list)
+        # Set default type if not provided
+        values['type'] = values.get('type', 'unknown type')
 
-        # Initialize variables
-        self.data = data
-        self.artifact_type = artifact_type
-        self.version = version
-        self.asset_path = self._ensure_asset_directory()
-        self.filename = filename or self._generate_filename()
-        self.metadata = metadata or {}
-        self.tags = tags or []
-        
-        file_path = os.path.join(self.asset_path, self.filename)
-        
-        # Saving the data based on its type
-        if isinstance(data, pd.DataFrame):
-            # Save the dataset as a CSV
-            data.to_csv(file_path + ".csv", index=False)
-        elif isinstance(data, bytes):
-            # Save binary data (e.g., models, pickled objects)
-            with open(file_path + ".bin", 'wb') as f:
-                f.write(data)
-        elif hasattr(data, "state_dict"):  # PyTorch model
-            # Save PyTorch model
-            torch.save(data, file_path + ".pth")
-        elif isinstance(data, dict):
-            # Save dictionaries (for model parameters/hyperparameters) as JSON
-            with open(file_path + ".json", 'w') as f:
-                json.dump(data, f, indent=4)
-        else:
-            # Save any other objects using pickle as a fallback
-            with open(file_path + ".pkl", 'wb') as f:
-                pickle.dump(data, f)
-            
-        # Save metadata to a JSON file with additional artifact details
-        self._save_metadata(file_path + ".json")
-        
-        print(f"Artifact saved as {file_path}")
+        # Generate default filename if asset_path is not provided
+        values['asset_path'] = values.get('asset_path') or f"{values['type']}/{values['name']}_v{values['version']}"
 
-    def _save_metadata(self, json_path: str) -> None:
-        """
-        Saves the artifact's metadata (version, tags, and other details) to a JSON file.
+        # Generate and encode the ID
+        if not values.get('id'):
+            values['id'] = cls._generate_id(values['asset_path'], values['version'])
         
-        Args:
-            json_path: The path to save the JSON metadata file.
-        """
-        # Generate an ID based on the asset_path and version
-        encoded_path = base64.urlsafe_b64encode(self.asset_path.encode()).decode()  # Base64-encode the asset path
-        artifact_id = f"{encoded_path}:{self.version}"
-
-        metadata = {
-            "id": artifact_id,
-            "asset_path": self.asset_path,
-            "version": self.version,
-            "type": self.artifact_type,
-            "metadata": self.metadata,
-            "tags": self.tags
-        }
+        return values
     
-        # Write the metadata to a JSON file
-        with open(json_path, 'w') as f:
-            json.dump(metadata, f, indent=4)
+    @staticmethod
+    def _generate_id(asset_path: str, version: str) -> str:
+        encoded_path = base64.urlsafe_b64encode(asset_path.encode()).decode()
+        return f"{encoded_path}v{version}"
 
-    def _ensure_asset_directory(self) -> str:
+    def save(self) -> None:
         """
-        Ensures the assets directory exists and creates subdirectories based on the artifact type.
-        
-        Returns:
-            str: The directory where the artifact will be saved.
+        Saves the artifact's data in assets/objects, along with a JSON file in assets/artifacts.
         """
-        # Create the base assets directory if it doesn't exist
-        if not os.path.exists(self.ASSETS_DIR):
-            os.makedirs(self.ASSETS_DIR)
-        
-        # Create subdirectory based on artifact type
-        subdir = os.path.join(self.ASSETS_DIR, self.artifact_type + "s")  # "datasets", "models", etc.
-        if not os.path.exists(subdir):
-            os.makedirs(subdir)
-        
-        return subdir
+        # Create filename with the desired format: name_artifactId
+        self.asset_path = f"{self.name}v{self.id}"
+        data_path = os.path.join("assets", "objects", self.asset_path)
+        metadata_path =f"assets/artifacts/{self.id}.json" 
 
-    def _generate_filename(self) -> str:
-        """
-        Generates a default filename if one is not provided.
-        
-        Returns:
-            str: The generated filename.
-        """
-        base_name = self.artifact_type + "_v" + self.version  # e.g., "dataset_v1.0.0" or "model_v1.0.0"
-        file_path = os.path.join(self.asset_path, base_name)
-        
-        counter = 1
-        while os.path.exists(file_path):
-            counter += 1
-            base_name = f"{self.artifact_type}_v{counter}.0.0"
-            file_path = os.path.join(self.asset_path, base_name)
-        
-        return base_name
+        # Saving the data based on its type
+        if isinstance(self.data, pd.DataFrame):
+            os.makedirs(os.path.dirname(data_path), exist_ok=True)
+            self.data.to_csv(data_path + ".csv", index=False)
+            self.asset_path = data_path + ".csv"
+        elif isinstance(self.data, bytes):
+            os.makedirs(os.path.dirname(data_path), exist_ok=True)
+            with open(data_path + ".bin", 'wb') as f:
+                f.write(self.data)
+            self.asset_path = data_path + ".bin"
+        elif isinstance(self.data, dict):
+            os.makedirs(os.path.dirname(data_path), exist_ok=True)
+            with open(data_path + ".json", 'w') as f:
+                json.dump(self.data, f, indent=4)
+            self.asset_path = data_path + ".json"
+        else:
+            os.makedirs(os.path.dirname(data_path), exist_ok=True)
+            with open(data_path + ".pkl", 'wb') as f:
+                pickle.dump(self.data, f)
+            self.asset_path = data_path + ".pkl"
+
+        # Normalize asset_path to use forward slashes
+        self.asset_path = self.asset_path.replace("\\", "/")
+
+        # Save metadata to the JSON file with the updated asset_path
+        os.makedirs(os.path.dirname(metadata_path), exist_ok=True)
+        with open(metadata_path, 'w') as f:
+            json.dump({
+                "name": self.name,
+                "version": self.version,
+                "asset_path": self.asset_path,
+                "tags": self.tags,
+                "metadata": self.metadata,
+                "type": self.type,
+                "id": self.id
+            }, f, indent=4)
+
+        print(f"Artifact saved with data file at {self.asset_path} and metadata at {metadata_path}")
 
     def load(self, file_path: str) -> None:
         """
@@ -167,9 +116,6 @@ class Artifact(BaseModel):
         if file_path.endswith(".csv"):
             # Load as a dataset (CSV)
             self.data = pd.read_csv(file_path)
-        elif file_path.endswith(".pth"):
-            # Load as a PyTorch model
-            self.data = torch.load(file_path)
         elif file_path.endswith(".bin") or file_path.endswith(".pkl"):
             # Load binary data or pickled object
             with open(file_path, 'rb') as f:
@@ -201,7 +147,7 @@ class Artifact(BaseModel):
                 metadata = json.load(f)
 
             # Update the artifact's attributes with the loaded metadata
-            self.artifact_type = metadata.get("type", "unknown")
+            self.type = metadata.get("type", "unknown")
             self.version = metadata.get("version", "unknown")
             self.tags = metadata.get("tags", [])
             self.metadata = metadata.get("metadata", {})

@@ -79,7 +79,7 @@ class Database():
             if not data:
                 continue
             for id, item in data.items():
-                self._storage.save(json.dumps(item).encode(), f"{collection}/{id}")
+                self._storage.save(json.dumps(item).encode(), f"{collection}/{id}.json")
 
         # Remove items from storage if they no longer exist in the data
         keys = self._storage.list("")
@@ -97,17 +97,37 @@ class Database():
     def _load(self):
         """Load the data from storage"""
         self._data = {}
-        for full_key in self._storage.list(""):
-            relative_key = os.path.relpath(full_key, self._storage._base_path).replace(os.sep, '/')
-            parts = relative_key.split("/")
-            if len(parts) < 2:
-                print(f"Invalid key format: {relative_key}")
-                continue
 
-            collection, id = parts[-2:]
-            data = self._storage.load(f"{collection}/{id}")
-            if collection not in self._data:
-                self._data[collection] = {}
-            self._data[collection][id] = json.loads(data.decode())
+        # List all keys (files) in storage
+        for full_key in self._storage.list(""):
+            try:
+                # Get the relative path within the storage base path
+                relative_key = os.path.relpath(full_key, self._storage._base_path).replace(os.sep, '/')
+                print(f"Processing key: {relative_key}")  # Debugging output
+
+                # Split the path into parts to extract collection and id
+                parts = relative_key.split("/")
+                if len(parts) < 2:
+                    print(f"Invalid key format: {relative_key}")
+                    continue
+
+                collection, id = parts[-2:]  # Collection is assumed to be second-to-last, id is last
+                print(f"Collection: {collection}, ID: {id}")  # Debugging output
+
+                # Load the actual data from the storage file
+                data = self._storage.load(f"{collection}/{id}")
+                
+                # Attempt to decode as JSON; if not JSON, catch and log the error
+                try:
+                    decoded_data = json.loads(data.decode())
+                    if collection not in self._data:
+                        self._data[collection] = {}
+                    self._data[collection][id] = decoded_data
+                    print(f"Loaded data for ID: {id} in collection: {collection}")  # Debugging output
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding JSON for {collection}/{id}: {e}")
+                    
+            except Exception as e:
+                print(f"Error processing key {relative_key}: {e}")
 
 

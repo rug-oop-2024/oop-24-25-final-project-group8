@@ -15,8 +15,18 @@ class DecisionTreeClassifierModel(Model):
 
     criterion: Literal['gini', 'entropy'] = Field(default='gini', description="The function to measure the quality of a split ('gini', 'entropy').")
     splitter: Literal['best', 'random'] = Field(default='best', description="The strategy used to split at each node ('best', 'random').")
-    max_depth: Optional[int] = Field(default=None, ge=1, description="The maximum depth of the tree, must be >= 1 if specified.")
-    random_state: Optional[int] = Field(default=None, description="Controls the randomness of the estimator.")
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Initialize _hyperparameters with only fields defined in this class
+        self._hyperparameters = {
+            field_name: getattr(self, field_name)
+            for field_name in self.__fields__.keys()
+            if field_name in self.__annotations__
+        }
+        self.name = "decision tree classifier"
+        self.type = "classification"
+        self._parameters ={}
 
     def fit(self, observations: np.ndarray, ground_truth: np.ndarray) -> None:
         """
@@ -30,8 +40,6 @@ class DecisionTreeClassifierModel(Model):
         self._model = DecisionTreeClassifier(
             criterion=self.criterion,
             splitter=self.splitter,
-            max_depth=self.max_depth,
-            random_state=self.random_state
         )
 
         self._model.fit(observations, ground_truth)

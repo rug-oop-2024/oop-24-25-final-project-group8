@@ -33,13 +33,25 @@ class LogisticRegressionModel(Model):
         Raises:
             ValueError: If the 'penalty' is 'l1' and the 'solver' is not 'liblinear' or 'saga'.
         """
-        penalty = values.get('penalty')
-        solver = values.get('solver')
+        penalty = getattr(values, 'penalty', None)
+        solver = getattr(values, 'solver', 'lbfgs')
 
         if penalty == 'l1' and solver not in ['liblinear', 'saga']:
             raise ValueError(f"penalty '{penalty}' is only supported by solvers 'liblinear' and 'saga'.")
 
         return values
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Initialize _hyperparameters with only fields defined in this class
+        self._hyperparameters = {
+            field_name: getattr(self, field_name)
+            for field_name in self.__fields__.keys()
+            if field_name in self.__annotations__
+        }
+        self.name = "logistic regression"
+        self.type = "classification"
+        self._parameters ={}
 
     def fit(self, observations: np.ndarray, ground_truth: np.ndarray) -> None:
         """
@@ -48,6 +60,10 @@ class LogisticRegressionModel(Model):
         :param ground_truth: Target values.
         """
         super()._validate_input(observations, ground_truth)
+        
+        # Convert one-hot encoded ground_truth to class labels
+        if ground_truth.ndim > 1 and ground_truth.shape[1] > 1:
+            ground_truth = np.argmax(ground_truth, axis=1)
 
         # Initialize the LogisticRegression model with the hyperparameters
         self._model = LogisticRegression(
@@ -74,6 +90,7 @@ class LogisticRegressionModel(Model):
         super()._validate_num_features(observations)
 
         predictions = self._model.predict(observations)
+        
         return predictions
 
     def _validate_fit(self) -> None:

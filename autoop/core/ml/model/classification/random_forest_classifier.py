@@ -16,8 +16,18 @@ class RandomForestClassifierModel(Model):
 
     n_estimators: int = Field(default=100, ge=1, description="The number of trees in the forest, must be >= 1.")
     criterion: Literal['gini', 'entropy'] = Field(default='gini', description="The function to measure the quality of a split ('gini', 'entropy').")
-    max_depth: Optional[int] = Field(default=None, ge=1, description="The maximum depth of the tree, must be >= 1 if specified.")
-    random_state: Optional[int] = Field(default=None, description="Controls the randomness of the estimator.")
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Initialize _hyperparameters with only fields defined in this class
+        self._hyperparameters = {
+            field_name: getattr(self, field_name)
+            for field_name in self.__fields__.keys()
+            if field_name in self.__annotations__
+        }
+        self.name = "random forest classifier"
+        self.type = "classification"
+        self._parameters ={}
 
     def fit(self, observations: np.ndarray, ground_truth: np.ndarray) -> None:
         """
@@ -31,8 +41,6 @@ class RandomForestClassifierModel(Model):
         self._model = RandomForestClassifier(
             n_estimators=self.n_estimators,
             criterion=self.criterion,
-            max_depth=self.max_depth,
-            random_state=self.random_state
         )
 
         self._model.fit(observations, ground_truth)

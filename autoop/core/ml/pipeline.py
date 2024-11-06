@@ -8,9 +8,10 @@ from autoop.core.ml.feature import Feature
 from autoop.core.ml.metric import Metric
 from autoop.functional.preprocessing import preprocess_features
 import numpy as np
+import os
 
 
-class Pipeline():
+class Pipeline(Artifact):
     
     def __init__(self, 
                  metrics: List[Metric],
@@ -19,7 +20,9 @@ class Pipeline():
                  input_features: List[Feature],
                  target_feature: Feature,
                  split=0.8,
+                 name="pipeline_config"
                  ):
+        super().__init__(name=name, type="pipeline")
         self._dataset = dataset
         self._model = model
         self._input_features = input_features
@@ -27,6 +30,7 @@ class Pipeline():
         self._metrics = metrics
         self._artifacts = {}
         self._split = split
+
         if target_feature.type == "categorical" and model.type != "classification":
             raise ValueError("Model type must be classification for categorical target feature")
         if target_feature.type == "continuous" and model.type != "regression":
@@ -42,6 +46,30 @@ Pipeline(
     metrics={list(map(str, self._metrics))},
 )
 """
+    def save(self) -> None:
+            """
+            Saves both the metadata (via Artifact) and the entire Pipeline object as a pickle file.
+            """
+            # Call the parent class's save method to save metadata
+            super().save()
+
+            # Path to save the pipeline object itself
+            self.asset_path = f"{self.name}v{self.id}.pkl"
+            data_path = os.path.join("assets", "objects", self.asset_path)
+            os.makedirs(os.path.dirname(data_path), exist_ok=True)
+
+            # Serialize the entire Pipeline object as a pickle file
+            with open(data_path, 'wb') as f:
+                pickle.dump(self, f)
+            print(f"Pipeline object saved as pickle at {data_path}")
+
+    @staticmethod
+    def load(path: str):
+        """Load the Pipeline object from a pickle file."""
+        with open(path, 'rb') as f:
+            pipeline = pickle.load(f)
+        print(f"Pipeline loaded from {path}")
+        return pipeline
 
     @property
     def model(self):
@@ -86,11 +114,15 @@ Pipeline(
 
     def _split_data(self):
         # Split the data into training and testing sets
-        split = self._split
+        split = float(self._split/100)
         self._train_X = [vector[:int(split * len(vector))] for vector in self._input_vectors]
         self._test_X = [vector[int(split * len(vector)):] for vector in self._input_vectors]
         self._train_y = self._output_vector[:int(split * len(self._output_vector))]
         self._test_y = self._output_vector[int(split * len(self._output_vector)):]
+
+        # Debugging statements to check split sizes
+        if len(self._test_y) == 0:
+            print("Warning: Test set is empty. Adjust the split ratio or check data size.")
 
     def _compact_vectors(self, vectors: List[np.array]) -> np.array:
         return np.concatenate(vectors, axis=1)
@@ -108,12 +140,25 @@ Pipeline(
         :return: List of tuples containing the metric and the result.
         """
         metrics_results = []
+
+        # Generate predictions
         predictions = self._model.predict(X)
+
+        # Ensure `predictions` is a 1D array of class labels
+        if predictions.ndim > 1:
+            predictions = np.argmax(predictions, axis=1)
+
+        # If Y is one-hot encoded, convert `predictions` to one-hot
+        if Y.ndim > 1:  # Y is one-hot encoded
+            num_classes = Y.shape[1]
+            predictions = np.eye(num_classes)[predictions]  # Convert to one-hot encoding
+
         for metric in self._metrics:
             result = metric(predictions, Y)
             metrics_results.append((metric, result))
-        return metrics_results
 
+        return metrics_results
+    
     def execute(self) -> Dict[str, List[tuple]]:
         """
         Execute the machine learning pipeline by performing preprocessing, 

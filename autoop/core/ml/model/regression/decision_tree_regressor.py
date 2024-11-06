@@ -14,8 +14,18 @@ class DecisionTreeRegressorModel(Model):
     _model: DecisionTreeRegressor = PrivateAttr()
 
     criterion: Literal['mse', 'friedman_mse', 'mae'] = Field(default='mse', description="The function to measure the quality of a split.")
-    max_depth: Optional[int] = Field(default=None, ge=1, description="The maximum depth of the tree, must be >= 1 if specified.")
-    random_state: Optional[int] = Field(default=None, description="Controls the randomness of the estimator.")
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Initialize _hyperparameters with only fields defined in this class
+        self._hyperparameters = {
+            field_name: getattr(self, field_name)
+            for field_name in self.__fields__.keys()
+            if field_name in self.__annotations__
+        }
+        self.name = "decision tree regressor"
+        self.type = "regression"
+        self._parameters ={}
 
     def fit(self, observations: np.ndarray, ground_truth: np.ndarray) -> None:
         """
@@ -27,8 +37,6 @@ class DecisionTreeRegressorModel(Model):
 
         self._model = DecisionTreeRegressor(
             criterion=self.criterion,
-            max_depth=self.max_depth,
-            random_state=self.random_state
         )
 
         self._model.fit(observations, ground_truth)

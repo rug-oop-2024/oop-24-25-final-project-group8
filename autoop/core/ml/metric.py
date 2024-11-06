@@ -62,6 +62,7 @@ class Metric(ABC):
         """
         pass
 
+
 class MeanSquaredError(Metric):
     """
     Mean Squared Error metric.
@@ -91,15 +92,18 @@ class Accuracy(Metric):
         Computes accuracy as the ratio of correctly predicted instances.
 
         Args:
-            y_true (np.ndarray): Ground truth labels.
-            y_pred (np.ndarray): Model predictions.
+            y_true (np.ndarray): Ground truth labels (can be one-hot encoded).
+            y_pred (np.ndarray): Model predictions (can be one-hot encoded).
 
         Returns:
             float: The accuracy value.
         """
+
+        # Calculate accuracy
         correct_predictions = np.sum(y_true == y_pred)
         total_predictions = len(y_true)
         accuracy = correct_predictions / total_predictions
+        
         return accuracy
     
 class Precision(Metric):
@@ -118,6 +122,7 @@ class Precision(Metric):
         Returns:
             float: The macro-averaged precision value.
         """
+
         unique_classes = np.unique(np.concatenate([y_true, y_pred]))
         precisions = []
 
@@ -147,6 +152,7 @@ class Recall(Metric):
         Returns:
             float: The macro-averaged recall value.
         """
+
         unique_classes = np.unique(np.concatenate([y_true, y_pred]))
         recalls = []
 

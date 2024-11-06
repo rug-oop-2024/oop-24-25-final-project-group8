@@ -115,9 +115,6 @@ Make sure after implementing your classes you pass the respective tests. You wil
 
 In this part you will integrate the library by importing your implemented classes in streamlit pages. **Notice that Tutorial III is designed to give you some knowledge on the functioning of Streamlit**.
 
-- `ST/page/datasets`: Create a page where you can manage the datasets.
-- `ST/datasets/management/create`: Upload a CSV dataset (e.g., Iris) and convert that into a dataset using the `from_dataframe` factory method. Since a dataset is already an artifact, you can use the `AutoMLSystem.get_instance` singelton class to to access either storage, database, or the artifact registry to save it.
-- `ST/datasets/management/save`: Use the artifact registry to save converted dataset artifact object.
 - `ST/page/modelling`: Create a page where you will be modelling a pipeline.
 - `ST/modelling/datasets/list`: Load existing datasets using the artifact registry. You can use a select box to achieve this.
 - `ST/modelling/datasets/features`: Detect the features and generate a selection menu for selecting the input features (many) and one target feature. Based on the feature selections, prompt the user with the detected task type (i.e., classification or regression).

@@ -13,10 +13,14 @@ class Model(Artifact, ABC):
     ("COPIED AND ADAPTED FROM ASSIGNMENT 1") 
     """
 
-    def __init__(self, type: str = "model", hyperparameters: dict = None):
-        super().__init__(type=type)
-        self._hyperparameters = deepcopy(hyperparameters) if hyperparameters else {}
-        self._parameters = {}
+    def __init__(self, hyperparameters: dict = None):
+        super().__init__(type="model")  # Pass `type` to Artifact initializer
+        self._hyperparameters = hyperparameters or {}
+
+        # Automatically populate self._hyperparameters with any defined fields in subclasses
+        for name, field in self.__class__.__fields__.items():
+            self._hyperparameters[name] = self._hyperparameters.get(name, field.default)
+
 
     @abstractmethod
     def fit(self, observations: np.ndarray, ground_truth: np.ndarray) -> None:
