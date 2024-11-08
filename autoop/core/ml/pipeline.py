@@ -106,14 +106,18 @@ Pipeline(
 
     def _preprocess_features(self) -> None:
         """Preprocess target and input features."""
-        target_preprocessor = FeaturePreprocessor([self._target_feature], self._dataset)
-        target_feature_name, target_data, target_artifact = target_preprocessor.preprocess()[0]
+        # Preprocess the target feature
+        target_preprocessor = FeaturePreprocessor()
+        target_result = target_preprocessor([self._target_feature], self._dataset)[0]
+        target_feature_name, target_data, target_artifact = target_result
         self._register_artifact(target_feature_name, target_artifact)
         self._output_vector = target_data
+
+        # Preprocess input features
+        input_preprocessor = FeaturePreprocessor()
+        input_results = input_preprocessor(self._input_features, self._dataset)
         
-        input_preprocessor = FeaturePreprocessor(self._input_features, self._dataset)
-        input_results = input_preprocessor.preprocess()
-        
+        # Store processed input feature data
         self._input_vectors = []
         for feature_name, data, artifact in input_results:
             self._register_artifact(feature_name, artifact)

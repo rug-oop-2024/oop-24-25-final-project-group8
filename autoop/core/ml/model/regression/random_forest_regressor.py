@@ -14,7 +14,7 @@ class RandomForestRegressorModel(Model):
     _model: RandomForestRegressor = PrivateAttr()
 
     n_estimators: int = Field(default=100, ge=1, description="The number of trees in the forest, must be >= 1.")
-    criterion: Literal['mse', 'mae'] = Field(default='mse', description="The function to measure the quality of a split ('mse', 'mae').")
+    criterion: Literal['absolute_error', 'poisson', 'friedman_mse', 'squared_error'] = Field(default='friedman_mse', description="The function to measure the quality of a split ('mse', 'mae').")
 
     def __init__(self, **data) -> None:
         """
