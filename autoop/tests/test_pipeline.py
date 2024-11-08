@@ -6,7 +6,7 @@ import numpy as np
 from autoop.core.ml.pipeline import Pipeline
 from autoop.core.ml.dataset import Dataset
 from autoop.core.ml.feature import Feature
-from autoop.functional.feature import detect_feature_types
+from autoop.functional.feature_type_detector import detect_feature_types
 from autoop.core.ml.model.regression.linear_regression import LinearRegressionModel
 from autoop.core.ml.metric import MeanSquaredError
 

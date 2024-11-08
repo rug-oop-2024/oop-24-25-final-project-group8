@@ -5,7 +5,7 @@ from typing import List, Literal, get_args
 from app.core.system import AutoMLSystem
 from autoop.core.ml.dataset import Dataset
 from autoop.core.ml.feature import Feature
-from autoop.functional.feature import detect_feature_types
+from autoop.functional.feature_type_detector import FeatureTypeDetector
 from autoop.core.ml.model import CLASSIFICATION_MODELS, REGRESSION_MODELS, get_model
 from autoop.core.ml.metric import METRICS, get_metric
 from autoop.core.ml.pipeline import Pipeline
@@ -98,8 +98,8 @@ if not st.session_state["training_mode"]:
 
         ### FEATURE SELECTION AND TASK SELECTION ###
             
-        # Detect features using the `detect_feature_types` function
-        features: List[Feature] = detect_feature_types(selected_dataset)
+        # Detect features using the FeatureTypeDetector
+        features: List[Feature] = FeatureTypeDetector(selected_dataset).detect_feature_types()
 
         # Separate feature names
         feature_names = [feature.name for feature in features]
