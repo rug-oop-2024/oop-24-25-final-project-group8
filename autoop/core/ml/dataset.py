@@ -1,5 +1,4 @@
 from autoop.core.ml.artifact import Artifact
-from abc import ABC, abstractmethod
 import pandas as pd
 import pickle
 import json
@@ -8,7 +7,7 @@ import io
 class Dataset(Artifact):
 
     @staticmethod
-    def from_dataframe(data: pd.DataFrame, name: str, asset_path: str, version: str="1.0.0"):
+    def from_dataframe(data: pd.DataFrame, name: str, asset_path: str, version: str="1.0.0") -> "Dataset":
         """
         Create a Dataset artifact from a pandas DataFrame.
         
@@ -18,6 +17,7 @@ class Dataset(Artifact):
             asset_path: Path where the artifact will be stored.
             version: The version of the artifact (default is 1.0.0).
         """
+        
         csv_data = data.to_csv(index=False).encode()
         return Dataset(
             name=name,
@@ -28,9 +28,8 @@ class Dataset(Artifact):
         )
         
     def read(self) -> pd.DataFrame:
-        """
-        Reads the dataset from its stored format and returns it as a pandas DataFrame.
-        """
+        """Reads the dataset from its stored format and returns it as a pandas DataFrame."""
+
         if self.asset_path.endswith(".csv"):
             # CSV data is directly readable by pandas
             return pd.read_csv(self.asset_path)

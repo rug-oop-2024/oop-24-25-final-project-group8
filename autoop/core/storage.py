@@ -61,7 +61,6 @@ class LocalStorage(Storage):
         try:
             with open(path, 'wb') as f:
                 f.write(data)
-            print(f"Data successfully written to {path}, size: {len(data)} bytes")
         except Exception as e:
             print(f"Error writing data to {path}: {e}")
 
@@ -92,7 +91,6 @@ class LocalStorage(Storage):
         
         try:
             os.remove(path)
-            print(f"Deleted file at {path}")
         except IsADirectoryError:
             raise NotFoundError(f"Path '{path}' is a directory, not a file")
         except Exception as e:
