@@ -15,20 +15,22 @@ import os
 class ArtifactRegistry:
     _instance = None
 
-    def __new__(cls, database: Database, storage: Storage):
+    def __new__(cls, database: Database, storage: Storage) -> "ArtifactRegistry":
+        """Create or return the singleton instance of ArtifactRegistry."""
         if cls._instance is None:
             cls._instance = super(ArtifactRegistry, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, database: Database, storage: Storage):
+    def __init__(self, database: Database, storage: Storage) -> None:
+        """Initialize the ArtifactRegistry with a database and storage."""
         if hasattr(self, "_initialized") and self._initialized:
             return
         self._database = database
         self._storage = storage
         self._initialized = True
 
-    def register(self, artifact: Artifact):
-        # Call the artifact's save method without arguments
+    def register(self, artifact: Artifact) -> None:
+        """Register an artifact by saving its metadata to the database."""
         artifact.save() 
         
         # Add the artifact's metadata to the database
@@ -42,7 +44,7 @@ class ArtifactRegistry:
         }
         self._database.set("artifacts", artifact.id, entry)
     
-    def list(self, type: str = None):
+    def list(self, type: str = None) -> List[Artifact]:
         """
         List all artifacts by reading JSON metadata files in assets/artifacts and filtering by type if specified.
         """
@@ -152,7 +154,7 @@ class ArtifactRegistry:
 
         return None
     
-    def delete(self, artifact: Artifact):
+    def delete(self, artifact: Artifact) -> None:
         """
         Deletes the data file at the path specified in artifact.asset_path
         and removes the metadata JSON for the artifact.
@@ -178,13 +180,14 @@ class ArtifactRegistry:
 class AutoMLSystem:
     _instance = None  # Singleton instance attribute
 
-    def __new__(cls, storage: LocalStorage, database: Database):
+    def __new__(cls, storage: LocalStorage, database: Database) -> "AutoMLSystem":
+        """Create or return the singleton instance of AutoMLSystem."""
         if cls._instance is None:
             cls._instance = super(AutoMLSystem, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, storage: LocalStorage, database: Database):
-        # Initialize only once
+    def __init__(self, storage: LocalStorage, database: Database) -> None:
+        """Initialize the AutoMLSystem with storage and a database."""
         if hasattr(self, "_initialized") and self._initialized:
             return
         self._storage = storage
@@ -193,7 +196,8 @@ class AutoMLSystem:
         self._initialized = True  # Flag to indicate initialization
 
     @staticmethod
-    def get_instance():
+    def get_instance() -> "AutoMLSystem":
+        """Retrieve or initialize the singleton instance of AutoMLSystem."""
         if AutoMLSystem._instance is None:
             AutoMLSystem._instance = AutoMLSystem(
                 LocalStorage("./assets/objects"), 
@@ -205,7 +209,8 @@ class AutoMLSystem:
         return AutoMLSystem._instance
     
     @property
-    def registry(self):
+    def registry(self) -> ArtifactRegistry:
+        """Return the ArtifactRegistry associated with the AutoMLSystem instance."""
         return self._registry
     
 
