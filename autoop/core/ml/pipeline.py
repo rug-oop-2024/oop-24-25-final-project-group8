@@ -156,10 +156,11 @@ Pipeline(
         if predictions.ndim > 1:
             predictions = np.argmax(predictions, axis=1)
 
-        # If Y is one-hot encoded, convert `predictions` to one-hot
-        if Y.ndim > 1:  # Y is one-hot encoded
-            num_classes = Y.shape[1]
-            predictions = np.eye(num_classes)[predictions]  # Convert to one-hot encoding
+        if self.model.type == "classification":
+            # If Y is one-hot encoded, convert `predictions` to one-hot
+            if Y.ndim > 1:  # Y is one-hot encoded
+                num_classes = Y.shape[1]
+                predictions = np.eye(num_classes)[predictions]  # Convert to one-hot encoding
 
         for metric in self._metrics:
             result = metric(predictions, Y)

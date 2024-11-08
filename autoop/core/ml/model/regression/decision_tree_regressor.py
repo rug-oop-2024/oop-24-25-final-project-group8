@@ -13,7 +13,7 @@ class DecisionTreeRegressorModel(Model):
 
     _model: DecisionTreeRegressor = PrivateAttr()
 
-    criterion: Literal['mse', 'friedman_mse', 'mae'] = Field(default='mse', description="The function to measure the quality of a split.")
+    criterion: Literal['absolute_error', 'squared_error', 'poisson', 'friedman_mse'] = Field(default='friedman_mse', description="The function to measure the quality of a split.")
 
     def __init__(self, **data):
         super().__init__(**data)
