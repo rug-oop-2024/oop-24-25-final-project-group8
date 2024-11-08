@@ -34,7 +34,7 @@ class PipelinesPage:
         """
         self.automl.registry.delete(artifact)
 
-    def display_pipeliness(self):
+    def display_pipelines(self):
         """Display all available pipelines with options to select, show details, and delete."""
         if self.artifacts:
             for idx, artifact in enumerate(self.artifacts):
@@ -99,10 +99,6 @@ class PipelinesPage:
                             st.error(f"An error occurred while loading the pipeline: {e}")
         else:
             st.write("No pipelines found in the registry.")
-
-    # Display datasets section
-    st.header("Dataset Management")
-    display_pipeliness()
 
 # Main execution
 if __name__ == "__main__":

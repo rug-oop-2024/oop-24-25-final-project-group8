@@ -40,7 +40,6 @@ class ArtifactRegistry:
             "metadata": artifact.metadata,
             "type": artifact.type,
         }
-        print("SAVING:", artifact.asset_path)
         self._database.set("artifacts", artifact.id, entry)
     
     def list(self, type: str = None):
