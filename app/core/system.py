@@ -53,7 +53,6 @@ class ArtifactRegistry:
 
         # Ensure the directory exists
         if not os.path.exists(artifacts_dir):
-            print(f"Directory {artifacts_dir} does not exist.")
             return artifacts  # Return an empty list if the directory is missing
 
         # Iterate over all JSON files in assets/artifacts

@@ -84,7 +84,7 @@ class PipelinesPage:
                             <div style="padding: 10px; border: 1px solid #e6e6e6; border-radius: 5px; font-size: 14px;">
                                 <h4 style="color: #4CAF50; margin-bottom: 5px;">Pipeline Details</h4>
                                 <p style="margin: 5px 0;"><strong>Dataset:</strong> {pipeline_instance._dataset.name if pipeline_instance._dataset else 'N/A'}</p>
-                                <p style="margin: 5px 0;"><strong>Split:</strong> {pipeline_instance._split}%</p>
+                                <p style="margin: 5px 0;"><strong>Split:</strong> {pipeline_instance._split*100}%</p>
                                 <p style="margin: 5px 0;"><strong>Model:</strong> {pipeline_instance._model.name}</p>
                                 <p style="margin: 5px 0;"><strong>Input Features:</strong> {', '.join([feat.name for feat in pipeline_instance._input_features])}</p>
                                 <p style="margin: 5px 0;"><strong>Target Feature:</strong> {pipeline_instance._target_feature.name if pipeline_instance._target_feature else 'N/A'}</p>

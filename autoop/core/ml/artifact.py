@@ -47,14 +47,20 @@ class Artifact(BaseModel):
         """
         Saves the artifact's data in `assets/objects`, along with a JSON file in `assets/artifacts`.
         """
-        # Normalize asset_path for consistency
-        self.asset_path = self.asset_path.replace("\\", "/")
-        data_path = os.path.join("assets", "objects", self.asset_path)
+        # Use a consistent naming convention: {name}_{id}.{extension}
+        filename = f"{self.name}_{self.id}.{self.asset_path.split('.')[-1]}"
+
+        # Construct the full path for data and metadata storage
+        data_path = os.path.join("assets", "objects", filename)
         metadata_path = os.path.join("assets", "artifacts", f"{self.id}.json")
 
-        # Save data
+        # Normalize asset_path for storage in metadata
+        self.asset_path = filename
+
+        # Save the actual data file
         self._save_data(data_path)
-        # Save metadata
+        
+        # Save metadata to the specified JSON file
         self._save_metadata(metadata_path)
 
     def _save_data(self, data_path: str) -> None:
@@ -70,9 +76,9 @@ class Artifact(BaseModel):
             self.data.to_csv(f"{data_path}.csv", index=False)
             self.asset_path = f"{data_path}.csv"
         elif isinstance(self.data, bytes):
-            with open(f"{data_path}.bin", 'wb') as f:
+            with open(f"{data_path}", 'wb') as f:
                 f.write(self.data)
-            self.asset_path = f"{data_path}.bin"
+            self.asset_path = f"{data_path}"
         elif isinstance(self.data, dict):
             with open(f"{data_path}.json", 'w') as f:
                 json.dump(self.data, f, indent=4)
