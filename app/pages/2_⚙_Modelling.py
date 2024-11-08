@@ -15,7 +15,24 @@ import re
 st.set_page_config(page_title="Modelling", page_icon="📈")
 
 class ModelingPage:
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Initializes an instance of the ModelingPage class, which is responsible for managing the
+        modeling configuration in the application, including dataset selection, feature configuration,
+        model selection, and task type determination.
+
+        Attributes:
+            automl (AutoMLSystem): Singleton instance of the AutoMLSystem for managing model and dataset resources.
+            task_type (str): The type of modeling task to be performed (e.g., "classification" or "regression").
+            selected_dataset_id (str): ID of the dataset selected by the user, retrieved from session state.
+            selected_dataset (Dataset): Dataset object retrieved based on the selected ID, if available.
+            input_features_box (Any): Placeholder for the Streamlit component managing input feature selection.
+            selected_model_name_box (Any): Placeholder for the Streamlit component managing model selection.
+            model_instance (Model): Instance of the selected model, if available.
+            hyperparameters (dict): Dictionary containing hyperparameters of the selected model.
+            updated_hyperparameters (dict): Dictionary storing updated hyperparameters during user modification.
+            train_split (float): Train-test split ratio for the dataset, as chosen by the user.
+        """
         # Access the singleton instance of AutoMLSystem
         self.automl = AutoMLSystem.get_instance()
 
@@ -27,7 +44,6 @@ class ModelingPage:
 
         # Fetch the full dataset object from the registry using the ID
         self.selected_dataset = self.automl.registry.get(self.selected_dataset_id) if self.selected_dataset_id else None
-        print(type(self.selected_dataset))
 
         self.input_features_box = None
         self.selected_model_name_box = None
@@ -36,25 +52,23 @@ class ModelingPage:
         self.updated_hyperparameters = None
         self.train_split = None
 
-    def write_helper_text(self, text: str):
+    def write_helper_text(self, text: str) -> None:
+        """Display helper text in gray font on the page."""
         st.write(f"<p style=\"color: #888;\">{text}</p>", unsafe_allow_html=True)
 
-    def display_header(self):
+    def display_header(self) -> None:
+        """Display page header and a description for the modeling section."""
         #Display page header and description
         st.write("# ⚙ Modelling")
         self.write_helper_text("In this section, you can design a machine learning pipeline to train a model on a dataset.")
         # Display selected dataset information
         st.write("## Dataset Selected:")
 
-    def initialize_session_state(self):
+    def initialize_session_state(self) -> None:
+        """Initialize or reset session state variables for modeling settings."""
         # Initialize session state variables if not already set
         if "training_mode" not in st.session_state:
             st.session_state["training_mode"] = False  # Tracks if we're in 'training' mode
-        # initialze session state variables
-        if "target_feature" not in st.session_state:
-            st.session_state["target_feature"] = None
-        if "target_feature_object" not in st.session_state:
-            st.session_state["target_feature_object"] = None
         if "input_features" not in st.session_state:
             st.session_state["input_features"] = []
         if "selected_metrics" not in st.session_state:
@@ -71,7 +85,8 @@ class ModelingPage:
         if "temp_input_features" not in st.session_state:
             st.session_state["temp_input_features"] = []
 
-    def display_dataset(self):
+    def display_dataset(self) -> None:
+        """Display selected dataset information, including a toggle for viewing dataset details."""
         # Set the key for the Show/Hide Details button state
         details_key = "selected_dataset_details"
 
@@ -100,7 +115,6 @@ class ModelingPage:
             # Display dataset head if "Show Details" is active
             if st.session_state[details_key]:
                 dataset_instance = self.automl.registry.get(self.selected_dataset.id)
-                print(type(dataset_instance), dataset_instance)
                 if dataset_instance:
                     st.write("Dataset Head:")
                     st.dataframe(dataset_instance.read().head())
@@ -108,7 +122,8 @@ class ModelingPage:
             st.write("None")
             self.write_helper_text("Please select a dataset on the Datasets page.")
 
-    def display_features(self):
+    def display_features(self) -> None:
+        """Display target and input feature selection options and update task type accordingly."""
         # Detect features using the FeatureTypeDetector
         features: List[Feature] = FeatureTypeDetector(self.selected_dataset).detect_feature_types()
 
@@ -117,8 +132,28 @@ class ModelingPage:
 
         st.write("### Feature Selection")
 
+        previous_target = st.session_state.get("target_feature")
+
+        if "target_feature" not in st.session_state or st.session_state["target_feature"] not in feature_names:
+            st.session_state["target_feature"] = feature_names[0]
+            st.session_state["target_feature_object"] = next(
+                feature for feature in features if feature.name == feature_names[0]
+            )
+
         def update_target_features():
+            # Update session state for the target feature and the corresponding feature object
             st.session_state["target_feature"] = st.session_state["target_feature_widget"]
+            st.session_state["target_feature_object"] = next(
+                feature for feature in features if feature.name == st.session_state["target_feature_widget"]
+            )
+            # If the target feature has changed, reset the input features and other settings
+            if previous_target != st.session_state["target_feature"]:
+                st.session_state["input_features"] = []
+                st.session_state["input_features_objects"] = []
+                st.session_state["selected_metrics"] = []
+                st.session_state["selected_model_name"] = None
+                st.session_state["selected_model_instance"] = None
+                st.session_state["selected_model_hyperparameters"] = {}
 
         # Use st.session_state['target_feature'] to set the default selection
         target_feature_box = st.selectbox(
@@ -128,12 +163,6 @@ class ModelingPage:
             key="target_feature_widget",  # Unique key to separate it from session state key
             on_change=update_target_features
         )
-
-        st.session_state["input_features"] = []
-        st.session_state["input_features_objects"] = []
-        st.session_state["target_feature"] = target_feature_box
-        st.session_state["target_feature_object"] = next(feature for feature in features if feature.name == target_feature_box)
-        st.session_state["selected_metrics"] = []
 
         # Filter out the selected target feature from input features list
         input_features_options = [feature for feature in feature_names if feature != st.session_state.get('target_feature')]
@@ -174,11 +203,16 @@ class ModelingPage:
 
             st.session_state['task_type'] = self.task_type
     
-    def display_model(self):
+    def display_model(self) -> None:
+        """Provide model selection dropdown based on task type and clear any previous hyperparameters."""
         st.write("## Select Model")
         
         # Model selection dropdown based on task type
         model_options = CLASSIFICATION_MODELS if self.task_type == "classification" else REGRESSION_MODELS
+
+        if "selected_model_widget" not in st.session_state:
+            # Set it to the first option in model_options by default
+            st.session_state["selected_model_widget"] = model_options[0]
 
         # Callback function to update the selected model and clear previous hyperparameters
         def update_selected_model():
@@ -213,7 +247,8 @@ class ModelingPage:
             self.hyperparameters = st.session_state[f"{self.selected_model_name_box}_hyperparameters"]
             st.session_state["selected_model_hyperparameters"] = self.hyperparameters
 
-    def display_hyperparameters(self):
+    def display_hyperparameters(self) -> None:
+        """Display adjustable hyperparameters for the selected model with constraints."""
         st.write("#### Set Hyperparameters")
                     
         # Create input fields for each hyperparameter, directly using session state keys
@@ -320,7 +355,8 @@ class ModelingPage:
         # Assign the updated dictionary back to the main hyperparameters in session state
         st.session_state[f"{self.selected_model_name_box}_hyperparameters"] = self.updated_hyperparameters
 
-    def display_split(self):
+    def display_split(self) -> None:
+        """Provide slider for selecting train-test split percentage and display chosen split."""
         # Step: Train-Test Split Selection
         st.write("#### Select Train-Test Split")
 
@@ -346,7 +382,8 @@ class ModelingPage:
         # Display the selected split
         st.write(f"Training set: {self.train_split}%, Testing set: {test_split}%")
 
-    def display_metrics(self):
+    def display_metrics(self) -> None:
+        """Display options to select evaluation metrics based on task type."""
         # Step: Select Metrics Step
         # Filter metrics based on task type
         if self.task_type == "classification":
@@ -374,7 +411,8 @@ class ModelingPage:
                 st.session_state["training_mode"] = True  # Switch to training mode
                 st.rerun()
     
-    def fetch_session_variables(self):
+    def fetch_session_variables(self) -> None:
+        """Retrieve session variables needed for training summary display."""
         # Ready to Train summary display
         self.selected_dataset_name = self.selected_dataset.name if self.selected_dataset else "None"
         self.selected_target_feature_object = st.session_state.get('target_feature_object', None)
@@ -390,7 +428,8 @@ class ModelingPage:
         self.selected_metrics = st.session_state.get("selected_metrics", [])
         self.task_type = st.session_state.get("task_type", "None")
 
-    def display_training_summary(self):
+    def display_training_summary(self) -> None:
+        """Display an overview of dataset, features, model, hyperparameters, and metrics chosen for training."""
         st.write("## Overview:")
         st.markdown(f"""
         <div style="padding: 10px; border: 1px solid #e6e6e6; border-radius: 5px;">
@@ -435,13 +474,12 @@ class ModelingPage:
         </div>
         """, unsafe_allow_html=True)
     
-    def display_pipeline(self):
+    def display_pipeline(self) -> None:
+        """Provide options to name and save the pipeline, start training, and display training metrics upon completion."""
         pipeline_name = st.text_input("Pipeline Name", value="My_Custom_Pipeline", help="Enter a custom name for the pipeline")
         pipeline_version = st.text_input("Pipeline Version", value="1.0.0", help="Enter a version for the pipeline")
         
-        print(self.task_type, self.selected_target_feature_object.type)
         metrics = [get_metric(metric_name) for metric_name in self.selected_metrics]
-        print(type(self.selected_dataset))
         pipeline = Pipeline(
                     metrics=metrics,
                     dataset=self.selected_dataset,
@@ -487,7 +525,8 @@ class ModelingPage:
             # Once training is complete, show a success message
             st.success("✅ Model training complete!")
 
-    def render(self):
+    def render(self) -> None:
+        """Render the modeling page by displaying dataset, features, model selection, hyperparameters, and training options."""
         self.display_header()
         self.initialize_session_state()
         if not st.session_state["training_mode"]:

@@ -164,7 +164,6 @@ class ArtifactRegistry:
         # Delete the data file
         if os.path.exists(artifact.asset_path):
             os.remove(artifact.asset_path)
-            print(f"Data file '{artifact.asset_path}' deleted successfully.")
         else:
             print(f"Data file '{artifact.asset_path}' not found.")
         
@@ -172,7 +171,6 @@ class ArtifactRegistry:
         metadata_file = f"assets/artifacts/{artifact.id}.json"
         if os.path.exists(metadata_file):
             os.remove(metadata_file)
-            print(f"Metadata file '{metadata_file}' deleted successfully.")
         else:
             print(f"Metadata file '{metadata_file}' not found.")
         

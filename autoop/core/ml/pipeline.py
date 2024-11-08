@@ -105,31 +105,53 @@ Pipeline(
         self._artifacts[name] = artifact
 
     def _preprocess_features(self) -> None:
-        """Preprocess target and input features."""
-        # Preprocess the target feature
-        target_preprocessor = FeaturePreprocessor()
-        target_result = target_preprocessor([self._target_feature], self._dataset)[0]
-        target_feature_name, target_data, target_artifact = target_result
-        self._register_artifact(target_feature_name, target_artifact)
-        self._output_vector = target_data
+        """Preprocess target and input features with diagnostics to check output."""
+        # Process target feature
+        try:
+            target_result = FeaturePreprocessor()([self._target_feature], self._dataset)
+            if target_result:
+                target_feature_name, target_data, target_artifact = target_result[0]
+                self._register_artifact(target_feature_name, target_artifact)
+                self._output_vector = target_data
+            else:
+                raise ValueError("Target feature preprocessing returned empty results. Check target feature name and type.")
+        except Exception as e:
+            print(f"Error in target feature preprocessing: {e}")
+            raise
 
-        # Preprocess input features
-        input_preprocessor = FeaturePreprocessor()
-        input_results = input_preprocessor(self._input_features, self._dataset)
-        
-        # Store processed input feature data
-        self._input_vectors = []
-        for feature_name, data, artifact in input_results:
-            self._register_artifact(feature_name, artifact)
-            self._input_vectors.append(data)
+        # Check if output vector is populated
+        if not len(self._output_vector):
+            raise ValueError("Target feature processing failed, resulting in an empty output vector.")
+
+        # Process input features
+        try:
+            input_results = FeaturePreprocessor()(self._input_features, self._dataset)
+            if not input_results:
+                raise ValueError("Input feature preprocessing returned empty results. Check input feature names and types.")
+            
+            # Collect input vectors
+            self._input_vectors = []
+            for feature_name, data, artifact in input_results:
+                self._register_artifact(feature_name, artifact)
+                self._input_vectors.append(data)
+
+        except Exception as e:
+            print(f"Error in input feature preprocessing: {e}")
+            raise
+
+        # Check if input vectors are populated
+        if not all(len(vector) for vector in self._input_vectors):
+            raise ValueError("Input feature processing failed, resulting in empty input vectors.")
 
     def _split_data(self) -> None:
-        """Split data into training and testing sets."""
+        """Split data into training and testing sets after preprocessing."""
+        
         split_idx = int(self._split * len(self._output_vector))
         self._train_X = [vector[:split_idx] for vector in self._input_vectors]
         self._test_X = [vector[split_idx:] for vector in self._input_vectors]
         self._train_y = self._output_vector[:split_idx]
         self._test_y = self._output_vector[split_idx:]
+        
         if len(self._test_y) == 0:
             print("Warning: Test set is empty. Adjust the split ratio or check data size.")
 
@@ -142,6 +164,7 @@ Pipeline(
         X = self._compact_vectors(self._train_X)
         Y = self._train_y
         self._model.fit(X, Y)
+
 
     def _evaluate(self, X: np.ndarray, Y: np.ndarray) -> List[tuple]:
         """Evaluate the model on given data and compute metrics."""
@@ -163,12 +186,16 @@ Pipeline(
         self._preprocess_features()
         self._split_data()
         self._train()
+        
+        # Train and test evaluation
         train_X = self._compact_vectors(self._train_X)
         train_y = self._train_y
         train_metrics_results = self._evaluate(train_X, train_y)
+        
         test_X = self._compact_vectors(self._test_X)
         test_y = self._test_y
         test_metrics_results = self._evaluate(test_X, test_y)
+        
         return {
             "train_metrics": train_metrics_results,
             "test_metrics": test_metrics_results,

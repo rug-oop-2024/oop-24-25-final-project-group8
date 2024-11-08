@@ -53,7 +53,7 @@ class RandomForestRegressorModel(Model):
             n_estimators=self.n_estimators,
             criterion=self.criterion,
         )
-        self._model.fit(observations, ground_truth)
+        self._model.fit(observations, ground_truth.ravel())
 
         # Store the fitted model's estimators in _parameters for future validation
         self._parameters["estimators_"] = self._model.estimators_
