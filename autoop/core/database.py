@@ -3,10 +3,11 @@ from typing import Dict, Tuple, List, Union
 from autoop.core.storage import Storage
 import os
 
+
 class Database:
     """
     A class representing a simple database stored in a file-based storage system.
-    
+
     Attributes:
         storage (Storage): The storage backend to persist data.
         _data (Dict[str, Dict[str, dict]]): In-memory storage for database entries.
@@ -15,7 +16,7 @@ class Database:
     def __init__(self, storage: Storage) -> None:
         """
         Initialize the Database with a storage backend.
-        
+
         Args:
             storage (Storage): The storage system to save and load data.
         """
@@ -26,7 +27,7 @@ class Database:
     def set(self, collection: str, id: str, entry: dict) -> dict:
         """
         Store or update an entry in the database.
-        
+
         Args:
             collection (str): The collection name.
             id (str): The unique ID for the entry.
@@ -35,7 +36,7 @@ class Database:
         Returns:
             dict: The stored entry.
         """
-        assert isinstance(entry, dict), 'Data must be a dictionary'
+        assert isinstance(entry, dict), "Data must be a dictionary"
         self._data.setdefault(collection, {})[id] = entry
         self._persist()
         return entry
@@ -43,7 +44,7 @@ class Database:
     def get(self, collection: str, id: str) -> Union[dict, None]:
         """
         Retrieve an entry from the database by collection and ID.
-        
+
         Args:
             collection (str): The collection name.
             id (str): The entry's unique ID.
@@ -56,7 +57,7 @@ class Database:
     def delete(self, collection: str, id: str) -> None:
         """
         Delete an entry from the database.
-        
+
         Args:
             collection (str): The collection name.
             id (str): The entry's unique ID.
@@ -67,12 +68,13 @@ class Database:
     def list(self, collection: str) -> List[Tuple[str, dict]]:
         """
         List all entries in a collection.
-        
+
         Args:
             collection (str): The collection name.
 
         Returns:
-            List[Tuple[str, dict]]: A list of tuples (id, entry) for each entry in the collection.
+            List[Tuple[str, dict]]: A list of tuples (id, entry) for each entry in the
+            collection.
         """
         return list(self._data.get(collection, {}).items())
 
@@ -91,11 +93,11 @@ class Database:
             for id, entry in entries.items():
                 path = f"{collection}/{id}.json"
                 self._storage.save(json.dumps(entry).encode(), path)
-        
+
         # Remove items from storage if they no longer exist in the in-memory data
-        for key in self._storage.list(''):
+        for key in self._storage.list(""):
             collection, id = os.path.split(key)
-            id = id.replace('.json', '')
+            id = id.replace(".json", "")
             if not self._data.get(collection, {}).get(id):
                 self._storage.delete(key)
 
@@ -104,9 +106,9 @@ class Database:
         Load data from storage into in-memory data structure.
         """
         self._data.clear()
-        for key in self._storage.list(''):
+        for key in self._storage.list(""):
             collection, id = os.path.split(key)
-            id = id.replace('.json', '')
+            id = id.replace(".json", "")
             try:
                 data = self._storage.load(key)
                 entry = json.loads(data.decode())

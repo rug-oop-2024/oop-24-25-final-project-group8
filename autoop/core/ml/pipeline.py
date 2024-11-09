@@ -11,19 +11,21 @@ from autoop.functional.feature_preprocessor import FeaturePreprocessor
 
 
 class Pipeline(Artifact):
-    
-    def __init__(self, 
-                 metrics: List[Metric],
-                 dataset: Dataset, 
-                 model: Model,
-                 input_features: List[Feature],
-                 target_feature: Feature,
-                 split: float = 0.8,
-                 version: str = "1.0.0",
-                 name: str = "pipeline_config") -> None:
+
+    def __init__(
+        self,
+        metrics: List[Metric],
+        dataset: Dataset,
+        model: Model,
+        input_features: List[Feature],
+        target_feature: Feature,
+        split: float = 0.8,
+        version: str = "1.0.0",
+        name: str = "pipeline_config",
+    ) -> None:
         """
         Initializes the Pipeline object with specified parameters.
-        
+
         Args:
             metrics (List[Metric]): A list of metrics to evaluate model performance.
             dataset (Dataset): The dataset to be used in the pipeline.
@@ -41,16 +43,22 @@ class Pipeline(Artifact):
         self._target_feature = target_feature
         self._metrics = metrics
         self._artifacts = {}
-        self._split = split if split <= 1 else split / 100  # Ensure split is between 0 and 1
-        
+        self._split = (
+            split if split <= 1 else split / 100
+        )  # Ensure split is between 0 and 1
+
         # Validate target and model compatibility
         if target_feature.type == "categorical" and model.type != "classification":
-            raise ValueError("Model type must be classification for categorical target feature")
+            raise ValueError(
+                "Model type must be classification for categorical target feature"
+            )
         if target_feature.type == "continuous" and model.type != "regression":
-            raise ValueError("Model type must be regression for continuous target feature")
+            raise ValueError(
+                "Model type must be regression for continuous target feature"
+            )
 
     def __str__(self) -> str:
-        """ Returns human readable representation of pipeline"""
+        """Returns human readable representation of pipeline"""
         return f"""
 Pipeline(
     model={self._model.type},
@@ -67,13 +75,13 @@ Pipeline(
         self.asset_path = f"{self.name}v{self.id}.pkl"
         data_path = os.path.join("assets", "objects", self.asset_path)
         os.makedirs(os.path.dirname(data_path), exist_ok=True)
-        with open(data_path, 'wb') as f:
+        with open(data_path, "wb") as f:
             pickle.dump(self, f)
 
     @staticmethod
     def load(path: str) -> "Pipeline":
         """Load the Pipeline object from a pickle file."""
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             return pickle.load(f)
 
     @property
@@ -97,10 +105,14 @@ Pipeline(
             "target_feature": self._target_feature,
             "split": self._split,
         }
-        artifacts.append(Artifact(name="pipeline_config", data=pickle.dumps(pipeline_data)))
-        artifacts.append(self._model.to_artifact(name=f"pipeline_model_{self._model.type}"))
+        artifacts.append(
+            Artifact(name="pipeline_config", data=pickle.dumps(pipeline_data))
+        )
+        artifacts.append(
+            self._model.to_artifact(name=f"pipeline_model_{self._model.type}")
+        )
         return artifacts
-    
+
     def _register_artifact(self, name: str, artifact) -> None:
         self._artifacts[name] = artifact
 
@@ -114,21 +126,29 @@ Pipeline(
                 self._register_artifact(target_feature_name, target_artifact)
                 self._output_vector = target_data
             else:
-                raise ValueError("Target feature preprocessing returned empty results. Check target feature name and type.")
+                raise ValueError(
+                    "Target feature preprocessing returned empty results."
+                    "Check target feature name and type."
+                )
         except Exception as e:
             print(f"Error in target feature preprocessing: {e}")
             raise
 
         # Check if output vector is populated
         if not len(self._output_vector):
-            raise ValueError("Target feature processing failed, resulting in an empty output vector.")
+            raise ValueError(
+                "Target feature processing failed, resulting in an empty output vector."
+            )
 
         # Process input features
         try:
             input_results = FeaturePreprocessor()(self._input_features, self._dataset)
             if not input_results:
-                raise ValueError("Input feature preprocessing returned empty results. Check input feature names and types.")
-            
+                raise ValueError(
+                    "Input feature preprocessing returned empty results. Check input"
+                    "feature names and types."
+                )
+
             # Collect input vectors
             self._input_vectors = []
             for feature_name, data, artifact in input_results:
@@ -141,19 +161,23 @@ Pipeline(
 
         # Check if input vectors are populated
         if not all(len(vector) for vector in self._input_vectors):
-            raise ValueError("Input feature processing failed, resulting in empty input vectors.")
+            raise ValueError(
+                "Input feature processing failed, resulting in empty input vectors."
+            )
 
     def _split_data(self) -> None:
         """Split data into training and testing sets after preprocessing."""
-        
+
         split_idx = int(self._split * len(self._output_vector))
         self._train_X = [vector[:split_idx] for vector in self._input_vectors]
         self._test_X = [vector[split_idx:] for vector in self._input_vectors]
         self._train_y = self._output_vector[:split_idx]
         self._test_y = self._output_vector[split_idx:]
-        
+
         if len(self._test_y) == 0:
-            print("Warning: Test set is empty. Adjust the split ratio or check data size.")
+            print(
+                "Warning: Test set is empty. Adjust the split ratio or check data size."
+            )
 
     def _compact_vectors(self, vectors: List[np.array]) -> np.array:
         """Combine multiple feature vectors into a single array."""
@@ -164,7 +188,6 @@ Pipeline(
         X = self._compact_vectors(self._train_X)
         Y = self._train_y
         self._model.fit(X, Y)
-
 
     def _evaluate(self, X: np.ndarray, Y: np.ndarray) -> List[tuple]:
         """Evaluate the model on given data and compute metrics."""
@@ -180,22 +203,22 @@ Pipeline(
             result = metric(predictions, Y)
             metrics_results.append((metric, result))
         return metrics_results
-    
+
     def execute(self) -> Dict[str, List[tuple]]:
         """Execute the pipeline, including preprocessing, training, and evaluation."""
         self._preprocess_features()
         self._split_data()
         self._train()
-        
+
         # Train and test evaluation
         train_X = self._compact_vectors(self._train_X)
         train_y = self._train_y
         train_metrics_results = self._evaluate(train_X, train_y)
-        
+
         test_X = self._compact_vectors(self._test_X)
         test_y = self._test_y
         test_metrics_results = self._evaluate(test_X, test_y)
-        
+
         return {
             "train_metrics": train_metrics_results,
             "test_metrics": test_metrics_results,

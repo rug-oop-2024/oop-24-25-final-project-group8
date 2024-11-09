@@ -6,6 +6,7 @@ from autoop.core.ml.dataset import Dataset
 from autoop.core.ml.feature import Feature
 from autoop.functional.feature_type_detector import detect_feature_types
 
+
 class TestFeatures(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -31,7 +32,7 @@ class TestFeatures(unittest.TestCase):
             self.assertIsInstance(feature, Feature)
             self.assertEqual(feature.name in iris.feature_names, True)
             self.assertEqual(feature.type, "numerical")
-        
+
     def test_detect_features_with_categories(self):
         data = fetch_openml(name="adult", version=1, parser="auto")
         df = pd.DataFrame(
@@ -68,5 +69,7 @@ class TestFeatures(unittest.TestCase):
             self.assertEqual(feature.name in data.feature_names, True)
         for detected_feature in filter(lambda x: x.name in numerical_columns, features):
             self.assertEqual(detected_feature.type, "numerical")
-        for detected_feature in filter(lambda x: x.name in categorical_columns, features):
+        for detected_feature in filter(
+            lambda x: x.name in categorical_columns, features
+        ):
             self.assertEqual(detected_feature.type, "categorical")

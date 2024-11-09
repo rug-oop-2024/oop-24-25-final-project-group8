@@ -1,7 +1,6 @@
 from sklearn.datasets import fetch_openml
 import unittest
 import pandas as pd
-import numpy as np
 
 from autoop.core.ml.pipeline import Pipeline
 from autoop.core.ml.dataset import Dataset
@@ -9,6 +8,7 @@ from autoop.core.ml.feature import Feature
 from autoop.functional.feature_type_detector import detect_feature_types
 from autoop.core.ml.model.regression.linear_regression import LinearRegressionModel
 from autoop.core.ml.metric import MeanSquaredError
+
 
 class TestPipeline(unittest.TestCase):
 
@@ -30,7 +30,7 @@ class TestPipeline(unittest.TestCase):
             input_features=list(filter(lambda x: x.name != "age", self.features)),
             target_feature=Feature(name="age", type="numerical"),
             metrics=[MeanSquaredError()],
-            split=0.8
+            split=0.8,
         )
         self.ds_size = data.data.shape[0]
 
@@ -45,7 +45,9 @@ class TestPipeline(unittest.TestCase):
         self.pipeline._preprocess_features()
         self.pipeline._split_data()
         self.assertEqual(self.pipeline._train_X[0].shape[0], int(0.8 * self.ds_size))
-        self.assertEqual(self.pipeline._test_X[0].shape[0], self.ds_size - int(0.8 * self.ds_size))
+        self.assertEqual(
+            self.pipeline._test_X[0].shape[0], self.ds_size - int(0.8 * self.ds_size)
+        )
 
     def test_train(self):
         self.pipeline._preprocess_features()
@@ -58,7 +60,7 @@ class TestPipeline(unittest.TestCase):
         self.pipeline._split_data()
         self.pipeline._train()
 
-        # Ensure that the test data is in the correct format (e.g., a single NumPy array)
+        # Ensure that the test data is in the correct format (e.g., a single NumPy array
         X_test = self.pipeline._compact_vectors(self.pipeline._test_X)
         y_test = self.pipeline._test_y
 

@@ -7,7 +7,6 @@ from typing import List, Optional
 import json
 import pandas as pd
 import pickle
-from copy import deepcopy
 
 import os
 
@@ -31,8 +30,8 @@ class ArtifactRegistry:
 
     def register(self, artifact: Artifact) -> None:
         """Register an artifact by saving its metadata to the database."""
-        artifact.save() 
-        
+        artifact.save()
+
         # Add the artifact's metadata to the database
         entry = {
             "name": artifact.name,
@@ -43,10 +42,11 @@ class ArtifactRegistry:
             "type": artifact.type,
         }
         self._database.set("artifacts", artifact.id, entry)
-    
+
     def list(self, type: str = None) -> List[Artifact]:
         """
-        List all artifacts by reading JSON metadata files in assets/artifacts and filtering by type if specified.
+        List all artifacts by reading JSON metadata files in
+        assets/artifacts and filtering by type if specified.
         """
         artifacts_dir = "assets/artifacts"
         artifacts = []
@@ -59,10 +59,10 @@ class ArtifactRegistry:
         for file_name in os.listdir(artifacts_dir):
             if file_name.endswith(".json"):
                 file_path = os.path.join(artifacts_dir, file_name)
-                
+
                 # Open and parse each JSON file
                 try:
-                    with open(file_path, 'r') as f:
+                    with open(file_path, "r") as f:
                         metadata = json.load(f)
 
                     # Filter by type, if specified
@@ -75,14 +75,14 @@ class ArtifactRegistry:
                             tags=metadata.get("tags", {}),
                             metadata=metadata.get("metadata", {}),
                             data=None,  # Data will be loaded when needed
-                            type=metadata["type"]
+                            type=metadata["type"],
                         )
                         artifacts.append(artifact)
                 except (IOError, json.JSONDecodeError) as e:
                     print(f"Error loading metadata from {file_path}: {e}")
 
         return artifacts
-    
+
     def get(self, artifact_id: str) -> Optional[Artifact]:
         """
         Retrieves an artifact by loading its metadata from assets/dbo/artifacts
@@ -98,7 +98,7 @@ class ArtifactRegistry:
 
         try:
             # Load metadata from the JSON file
-            with open(metadata_file, 'r') as f:
+            with open(metadata_file, "r") as f:
                 metadata = json.load(f)
 
             # Retrieve asset_path directly from the metadata
@@ -107,15 +107,15 @@ class ArtifactRegistry:
 
             # Load the data based on file extension in asset_path
             if data_file_path.endswith(".bin"):
-                with open(data_file_path, 'rb') as f:
+                with open(data_file_path, "rb") as f:
                     loaded_data = f.read()  # Assume binary data is stored as bytes
             elif data_file_path.endswith(".csv"):
                 loaded_data = pd.read_csv(data_file_path)
             elif data_file_path.endswith(".json"):
-                with open(data_file_path, 'r') as f:
+                with open(data_file_path, "r") as f:
                     loaded_data = json.load(f)
             elif data_file_path.endswith(".pkl"):
-                with open(data_file_path, 'rb') as f:
+                with open(data_file_path, "rb") as f:
                     loaded_data = pickle.load(f)
             else:
                 print(f"Unsupported file format for {data_file_path}")
@@ -131,7 +131,7 @@ class ArtifactRegistry:
                     tags=metadata.get("tags", {}),
                     metadata=metadata.get("metadata", {}),
                     data=loaded_data,
-                    type=metadata["type"]
+                    type=metadata["type"],
                 )
             else:
                 # Return a generic Artifact object for other types
@@ -143,7 +143,7 @@ class ArtifactRegistry:
                     tags=metadata.get("tags", {}),
                     metadata=metadata.get("metadata", {}),
                     data=loaded_data,
-                    type=metadata["type"]
+                    type=metadata["type"],
                 )
 
         except (FileNotFoundError, json.JSONDecodeError) as e:
@@ -152,12 +152,12 @@ class ArtifactRegistry:
             print(f"Unexpected error loading artifact ID {artifact_id}: {e}")
 
         return None
-    
+
     def delete(self, artifact: Artifact) -> None:
         """
         Deletes the data file at the path specified in artifact.asset_path
         and removes the metadata JSON for the artifact.
-        
+
         Args:
             artifact: The Artifact object containing the path to delete.
         """
@@ -166,15 +166,16 @@ class ArtifactRegistry:
             os.remove(artifact.asset_path)
         else:
             print(f"Data file '{artifact.asset_path}' not found.")
-        
+
         # Delete the metadata JSON file in assets/dbo/artifacts directory
         metadata_file = f"assets/artifacts/{artifact.id}.json"
         if os.path.exists(metadata_file):
             os.remove(metadata_file)
         else:
             print(f"Metadata file '{metadata_file}' not found.")
-        
+
         artifact = None
+
 
 class AutoMLSystem:
     _instance = None  # Singleton instance attribute
@@ -199,18 +200,12 @@ class AutoMLSystem:
         """Retrieve or initialize the singleton instance of AutoMLSystem."""
         if AutoMLSystem._instance is None:
             AutoMLSystem._instance = AutoMLSystem(
-                LocalStorage("./assets/objects"), 
-                Database(
-                    LocalStorage("./assets/dbo")
-                )
+                LocalStorage("./assets/objects"), Database(LocalStorage("./assets/dbo"))
             )
         AutoMLSystem._instance._database.refresh()
         return AutoMLSystem._instance
-    
+
     @property
     def registry(self) -> ArtifactRegistry:
         """Return the ArtifactRegistry associated with the AutoMLSystem instance."""
         return self._registry
-    
-
-

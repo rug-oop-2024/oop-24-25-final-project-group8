@@ -1,14 +1,17 @@
 from abc import ABC, abstractmethod
 import os
-from typing import List, Union
+from typing import List
 from glob import glob
+
 
 class NotFoundError(Exception):
     """
     Class for throwing file not found exception
     """
+
     def __init__(self, path: str) -> None:
         super().__init__(f"Path not found: {path}")
+
 
 class Storage(ABC):
     """Abstract base class for a storage system."""
@@ -39,7 +42,8 @@ class LocalStorage(Storage):
 
     def __init__(self, base_path: str = "./assets") -> None:
         """
-        Initializes LocalStorage with a base path, creating the base directory if it doesn't exist.
+        Initializes LocalStorage with a base path, creating the base directory
+        if it doesn't exist.
 
         Args:
             base_path (str): Base directory for storage. Defaults to './assets'.
@@ -57,9 +61,9 @@ class LocalStorage(Storage):
         """
         path = self._join_path(key)
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        
+
         try:
-            with open(path, 'wb') as f:
+            with open(path, "wb") as f:
                 f.write(data)
         except Exception as e:
             print(f"Error writing data to {path}: {e}")
@@ -76,7 +80,7 @@ class LocalStorage(Storage):
         """
         path = self._join_path(key)
         self._assert_path_exists(path)
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             return f.read()
 
     def delete(self, key: str = "/") -> None:
@@ -88,7 +92,7 @@ class LocalStorage(Storage):
         """
         path = self._join_path(key)
         self._assert_path_exists(path)
-        
+
         try:
             os.remove(path)
         except IsADirectoryError:
@@ -98,7 +102,8 @@ class LocalStorage(Storage):
 
     def list(self, prefix: str) -> List[str]:
         """
-        List all files under the specified path, returning paths relative to the base directory.
+        List all files under the specified path, returning paths relative to the base
+        directory.
 
         Args:
             prefix (str): The prefix path under which to list files.
@@ -108,12 +113,13 @@ class LocalStorage(Storage):
         """
         path = self._join_path(prefix)
         self._assert_path_exists(path)
-        
-        keys = glob(os.path.join(path, '**', '*'), recursive=True)
-        
+
+        keys = glob(os.path.join(path, "**", "*"), recursive=True)
+
         return [
             os.path.relpath(key, self._base_path).replace("\\", "/")
-            for key in keys if os.path.isfile(key)
+            for key in keys
+            if os.path.isfile(key)
         ]
 
     def _assert_path_exists(self, path: str) -> None:
@@ -128,7 +134,7 @@ class LocalStorage(Storage):
         """
         if not os.path.exists(path):
             raise NotFoundError(path)
-    
+
     def _join_path(self, path: str) -> str:
         """
         Join the base path with a given path and normalize to use forward slashes.

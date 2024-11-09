@@ -2,6 +2,7 @@ from typing import List
 from autoop.core.ml.dataset import Dataset
 from autoop.core.ml.feature import Feature
 
+
 class FeatureTypeDetector:
     """
     A class to detect types of features in a dataset.
@@ -9,7 +10,7 @@ class FeatureTypeDetector:
     Attributes:
         dataset (Dataset): The dataset to analyze for feature types.
     """
-    
+
     def __init__(self, dataset: Dataset) -> None:
         """
         Initializes the FeatureTypeDetector with a dataset.
@@ -21,11 +22,12 @@ class FeatureTypeDetector:
 
     def detect_feature_types(self) -> List[Feature]:
         """
-        Detects feature types in the dataset. Assumes only categorical and numerical features.
+        Detects feature types in the dataset. Assumes only categorical and numerical
+        features.
 
         Returns:
             List[Feature]: A list of features with their detected types.
-            
+
         Raises:
             ValueError: If a feature has unrecognized data types or no non-None values.
         """
@@ -36,7 +38,7 @@ class FeatureTypeDetector:
             feature_type = self._determine_feature_type(df[feature_name], feature_name)
             feature = Feature(name=feature_name, type=feature_type)
             features.append(feature)
-        
+
         return features
 
     def _determine_feature_type(self, column_data, feature_name: str) -> str:
@@ -49,16 +51,22 @@ class FeatureTypeDetector:
 
         Returns:
             str: The type of the feature, either 'numerical' or 'categorical'.
-            
+
         Raises:
-            ValueError: If no non-None values exist in the feature or an unrecognized data type is found.
+            ValueError: If no non-None values exist in the feature or an unrecognized
+            data type is found.
         """
         for value in column_data:
             if value is not None:
                 if isinstance(value, (int, float)):
-                    return 'numerical'
+                    return "numerical"
                 elif isinstance(value, str):
-                    return 'categorical'
+                    return "categorical"
                 else:
-                    raise ValueError(f"Unrecognized data type for feature {feature_name}: {type(value)}")
-        raise ValueError(f"Feature {feature_name} contains no non-None values to determine type")
+                    raise ValueError(
+                        f"Unrecognized data type for feature"
+                        f" {feature_name}: {type(value)}"
+                    )
+        raise ValueError(
+            f"Feature {feature_name} contains no non-None values to determine type"
+        )

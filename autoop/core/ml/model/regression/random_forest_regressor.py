@@ -4,22 +4,32 @@ from typing import Literal
 import numpy as np
 from autoop.core.ml.model import Model
 
+
 class RandomForestRegressorModel(Model):
     """
     Wrapper around the RandomForestRegressor from scikit-learn.
-    Provides methods to fit the model to data and make predictions, while managing 
+    Provides methods to fit the model to data and make predictions, while managing
     model hyperparameters and fitted parameters within the Model framework.
     """
 
     _model: RandomForestRegressor = PrivateAttr()
 
-    n_estimators: int = Field(default=100, ge=1, description="The number of trees in the forest, must be >= 1.")
-    criterion: Literal['absolute_error', 'poisson', 'friedman_mse', 'squared_error'] = Field(default='friedman_mse', description="The function to measure the quality of a split ('mse', 'mae').")
+    n_estimators: int = Field(
+        default=100,
+        ge=1,
+        description="The number of trees in the forest, must be >= 1.",
+    )
+    criterion: Literal["absolute_error", "poisson", "friedman_mse", "squared_error"] = (
+        Field(
+            default="friedman_mse",
+            description="The function to measure the quality of a split ('mse', 'mae')",
+        )
+    )
 
     def __init__(self, **data) -> None:
         """
         Initialize the RandomForestRegressorModel with specified hyperparameters.
-        
+
         Args:
             data: Keyword arguments representing model hyperparameters.
                   Expected keys include 'n_estimators' and 'criterion'.
@@ -38,13 +48,15 @@ class RandomForestRegressorModel(Model):
     def fit(self, observations: np.ndarray, ground_truth: np.ndarray) -> None:
         """
         Fit the Random Forest Regressor model to the provided data.
-        
+
         Args:
-            observations (np.ndarray): Input data (features) with shape (n_samples, n_features).
+            observations (np.ndarray): Input data (features) with shape
+            (n_samples, n_features).
             ground_truth (np.ndarray): Target values with shape (n_samples,).
-        
+
         Raises:
-            ValueError: If there is a mismatch in dimensions between observations and ground truth.
+            ValueError: If there is a mismatch in dimensions between
+            observations and ground truth.
         """
         super()._validate_input(observations, ground_truth)
 
@@ -61,19 +73,20 @@ class RandomForestRegressorModel(Model):
     def predict(self, observations: np.ndarray) -> np.ndarray:
         """
         Use the trained model to make predictions on new observations.
-        
+
         Args:
-            observations (np.ndarray): Input data (features) with shape (n_samples, n_features) 
-                                       for which predictions are to be made.
-        
+            observations (np.ndarray): Input data (features) with shape
+            (n_samples, n_features) for which predictions are to be made.
+
         Returns:
             np.ndarray: Predicted values, with shape (n_samples,).
-        
+
         Raises:
-            ValueError: If the model has not been fitted or if the input features do not match 
-                        the expected dimensions from training.
+            ValueError: If the model has not been fitted or if the input features do
+            not match the expected dimensions from training.
         """
-        # Validate that the model is fitted and that input dimensions match training dimensions
+        # Validate that the model is fitted and that input dimensions
+        # match training dimensions
         self._validate_fit()
         super()._validate_num_features(observations)
 
@@ -82,9 +95,10 @@ class RandomForestRegressorModel(Model):
     def _validate_fit(self) -> None:
         """
         Check if the model has been fitted by verifying the presence of estimators.
-        
+
         Raises:
-            ValueError: If the model has not been trained, indicated by missing estimators.
+            ValueError: If the model has not been trained, indicated by missing
+            estimators.
         """
-        if not hasattr(self._model, 'estimators_'):
+        if not hasattr(self._model, "estimators_"):
             raise ValueError("The model has not been trained yet!")

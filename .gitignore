@@ -4,3 +4,4 @@
 *__MACOSX
 *assets*
 venv/
+.flake8

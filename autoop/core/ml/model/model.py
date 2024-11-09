@@ -16,13 +16,17 @@ class Model(Artifact, ABC):
         Initialize the model with optional hyperparameters.
 
         Args:
-            hyperparameters (Optional[Dict[str, Any]]): A dictionary of hyperparameters for the model.
+            hyperparameters (Optional[Dict[str, Any]]): A dictionary of hyperparameters
+            for the model.
         """
         super().__init__(type="model")  # Pass `type` to Artifact initializer
         self._hyperparameters = hyperparameters or {}
-        self._parameters = {}  # Initialize _parameters to store model-specific parameters
+        self._parameters = (
+            {}
+        )  # Initialize _parameters to store model-specific parameters
 
-        # Automatically populate hyperparameters with defaults defined in subclass fields
+        # Automatically populate hyperparameters with defaults defined in subclass
+        # fields
         for name, field in self.__class__.__fields__.items():
             self._hyperparameters[name] = self._hyperparameters.get(name, field.default)
 
@@ -50,7 +54,9 @@ class Model(Artifact, ABC):
         """
         pass
 
-    def _validate_input(self, observations: np.ndarray, ground_truth: np.ndarray) -> None:
+    def _validate_input(
+        self, observations: np.ndarray, ground_truth: np.ndarray
+    ) -> None:
         """
         Validates that input data is of the correct shape and dimensionality.
 
@@ -63,7 +69,8 @@ class Model(Artifact, ABC):
         """
         if observations.shape[0] != ground_truth.shape[0]:
             raise ValueError(
-                f"Mismatch in number of samples: Observations have {observations.shape[0]} samples, "
+                f"Mismatch in number of samples: Observations have"
+                f"{observations.shape[0]} samples, "
                 f"but ground truth has {ground_truth.shape[0]} samples."
             )
         if observations.ndim != 2:
@@ -71,7 +78,9 @@ class Model(Artifact, ABC):
 
         num_samples, num_features = observations.shape
         if num_samples < 1 or num_features < 1:
-            raise ValueError("The input data must have at least one sample and one feature.")
+            raise ValueError(
+                "The input data must have at least one sample and one feature."
+            )
 
         if num_features > num_samples:
             print(
@@ -94,7 +103,8 @@ class Model(Artifact, ABC):
         num_features = self._parameters.get("num_features")
         if num_features is not None and observations.shape[1] != num_features:
             raise ValueError(
-                f"Number of dimensions from fitting the data ({num_features}) does not match input "
+                f"Number of dimensions from fitting the data"
+                f"({num_features}) does not match input "
                 f"observations ({observations.shape[1]})."
             )
 
