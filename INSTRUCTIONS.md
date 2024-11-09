@@ -109,7 +109,7 @@ In this section you will focus on building and testing the core functionality of
 
 **Remember to add type hints and docstrings**
 
-- `ML/detect-features`: Implement the function `autoop.functional.feature.detect_feature_types`. This is covered in the tests.
+- `ML/detect-features`: Implement the function `autoop.functional.feature.detect_feature_types`. This is covered in the tests. 
 - `ML/artifact`: Implement the artifact class in `autoop.core.ml.artifact`.
 - `ML/feature`: Implement the feature class in `autoop.core.ml.feature`.
 - `ML/metric`: Implement the metric class in `autoop.core.ml.metric` with the `__call__` method.

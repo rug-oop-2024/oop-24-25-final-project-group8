@@ -1,0 +1,3 @@
+[flake8]
+max-line-length = 88
+exclude = .git, __pycache__, docs/, old/, build/, dist/, assets/, .gitignore, decisions.txt, personal_rubric.txt, INSTRUCTIONS.md, README.md, requirements.txt, venv/, datasets/, .github

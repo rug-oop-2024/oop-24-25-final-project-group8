@@ -1,5 +1,5 @@
-streamlit
-pydantic
-pandas
-numpy
-scikit-learn
+numpy==2.1.3
+pandas==2.2.3
+pydantic==2.9.2
+scikit_learn==1.5.2
+streamlit==1.39.0

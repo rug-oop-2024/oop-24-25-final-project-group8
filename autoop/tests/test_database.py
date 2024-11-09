@@ -5,6 +5,7 @@ from autoop.core.storage import LocalStorage
 import random
 import tempfile
 
+
 class TestDatabase(unittest.TestCase):
 
     def setUp(self):
