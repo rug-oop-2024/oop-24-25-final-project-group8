@@ -1,0 +1,631 @@
+DSC-0001: Feature Type Detection and Preprocessing
+
+    Date: 2024-10-15
+    Decision: Implement automatic feature type detection and preprocessing based on feature type (categorical or numerical).
+    Status: Accepted
+
+Motivation: Enable flexible and automated preprocessing for datasets, reducing manual configuration.
+
+Reason:
+
+    Automatic Type Detection: Detecting feature types dynamically (e.g., "categorical" vs. "numerical") ensures features are transformed correctly.
+    Automated Transformation: Apply suitable preprocessing transformations (OneHotEncoder for categorical features, StandardScaler for numerical) based on type to prepare features for model input consistently.
+
+Limitations:
+
+    Only categorical and numerical features are supported. Mixed types or other feature types would require additional handling.
+
+Alternatives:
+
+    Manually specify each feature’s type and associated transformation.
+
+DSC-0002: Database and Storage Abstraction
+
+    Date: 2024-10-15
+    Decision: Abstract database and storage management to allow for scalable data handling.
+    Status: Accepted
+
+Motivation: Use a centralized interface for storing, retrieving, and organizing artifacts, datasets, and models, facilitating scalability and potential multi-platform compatibility.
+
+Reason:
+
+    Abstraction Layer: The Storage class provides an interface for file handling operations, allowing different storage backends, such as LocalStorage or cloud-based alternatives, to be integrated with minimal changes to the codebase.
+    Single Responsibility: The Database class manages data persistence, allowing for easy storage of data as a nested dictionary and enabling retrieval by collection and ID.
+
+Limitations:
+
+    LocalStorage currently relies on local filesystem organization and may require adaptation for use with non-local storage solutions.
+
+Alternatives:
+
+    Direct file and data management within the core components, which could introduce tight coupling and reduce flexibility.
+
+DSC-0003: Pipeline Execution with Preprocessing, Training, and Evaluation Steps
+
+    Date: 2024-10-15
+    Decision: Implement pipeline execution to handle the full lifecycle of feature preprocessing, model training, and evaluation.
+    Status: Accepted
+
+Motivation: Provide an end-to-end process that prepares data, trains the model, and evaluates metrics in a streamlined, reusable structure.
+
+Reason:
+
+    Modular Execution Flow: Breaking down the pipeline into individual steps (_preprocess_features, _train, _evaluate) allows for separation of concerns, making each stage easy to debug and extend.
+    Metrics Evaluation: With the ability to add multiple evaluation metrics, the pipeline is adaptable to various performance assessments (e.g., accuracy for classification, MSE for regression).
+
+Limitations:
+
+    The _evaluate method assumes specific metric behaviors and output formats, limiting extensibility to certain types of metrics.
+    Split data into train/test sets only; does not support more complex split strategies, such as k-fold cross-validation.
+
+Alternatives:
+
+    Manually execute each phase of model preparation, training, and evaluation without a unified pipeline. This approach would reduce code reusability.
+
+DSC-0004: Artifact Registry and Metadata Management
+
+    Date: 2024-10-15
+    Decision: Use an ArtifactRegistry to centralize metadata storage and enable retrieval, listing, and deletion of artifacts.
+    Status: Accepted
+
+Motivation: A unified registry for managing and tracking metadata for all artifacts, models, and datasets in the system ensures consistency, maintainability, and scalability.
+
+Reason:
+
+    Centralized Artifact Tracking: Storing metadata for each artifact, including models, datasets, and pipelines, ensures that details about each artifact's version, path, and type are consistently accessible.
+    Singleton Design: Ensures that the AutoMLSystem and its registry are single instances throughout the application, preventing data conflicts and redundant storage calls.
+
+Limitations:
+
+    Currently, ArtifactRegistry relies on JSON files to manage metadata, which may not scale well with a high volume of artifacts.
+
+Alternatives:
+
+    Use a relational or NoSQL database to store metadata directly, providing more scalable data management.
+
+DSC-0005: Configurable Model and Pipeline Instantiation
+
+    Date: 2024-10-15
+    Decision: Allow models and pipelines to be instantiated with configurable parameters and hyperparameters.
+    Status: Accepted
+
+Motivation: Provide a flexible configuration setup to initialize models with hyperparameters suited to specific use cases.
+
+Reason:
+
+    Hyperparameter Flexibility: The Model class accepts a dictionary of hyperparameters, supporting various model types and enabling easy experimentation with different configurations.
+    Configurable Pipelines: Allowing the pipeline to be instantiated with chosen input features, target feature, and evaluation metrics provides end-to-end customization for machine learning workflows.
+
+Limitations:
+
+    Hyperparameters are passed as a dictionary, lacking strict type enforcement, which could lead to errors if invalid hyperparameters are provided.
+
+Alternatives:
+
+    Implement a more rigid configuration system that validates all parameters at instantiation, potentially reducing flexibility.
+
+DSC-0006: Abstract Model Base Class
+
+    Date: 2024-10-15
+    Decision: Use an abstract base class (Model) for both classification and regression models.
+    Status: Accepted
+
+Motivation: Create a flexible, reusable model interface to standardize the implementation of various machine learning models in a unified structure.
+
+Reason:
+
+    Standardization: The abstract Model class provides a consistent interface for model methods like fit and predict, which all specific model implementations must follow.
+    Extendibility: By separating model logic into individual classes inheriting from Model, new models with unique characteristics can be introduced without altering existing code.
+
+Limitations:
+
+    Extending the class requires ensuring compatibility with all existing abstract methods, which could be restrictive for specialized models.
+
+Alternatives:
+
+    Implement separate models independently, without an abstract base class, though this would reduce code consistency and enforce less structure.
+
+DSC-0007: Metrics Calculation via Factory Pattern
+
+    Date: 2024-10-15
+    Decision: Use a factory function (get_metric) to retrieve metric instances based on the metric name.
+    Status: Accepted
+
+Motivation: Provide an extensible method for retrieving metric instances, simplifying metric management across various evaluation requirements.
+
+Reason:
+
+    Modularity: The get_metric factory allows new metrics to be easily added and accessed by name without changing the existing codebase.
+    Flexible Metric Assignment: As metrics are added by type (e.g., classification or regression), users can easily switch or add metrics to a pipeline.
+
+Limitations:
+
+    The factory function currently supports only predefined metrics; custom metrics must be added directly to the factory.
+
+Alternatives:
+
+    Use metric instances directly within pipelines, though this would reduce flexibility and make adding new metrics more cumbersome.
+
+DSC-0008: Singleton Design Pattern for AutoMLSystem
+
+    Date: 2024-10-15
+    Decision: Implement the AutoMLSystem class as a singleton.
+    Status: Accepted
+
+Motivation: Ensure that only a single instance of the AutoMLSystem is created, avoiding duplicate database and storage connections and promoting consistent access.
+
+Reason:
+
+    Centralized Access: With a singleton, the AutoMLSystem can be accessed consistently across the application without re-initialization or redundant instantiation.
+    Resource Optimization: By maintaining a single instance, resources are used more efficiently, particularly for large datasets or storage connections.
+
+Limitations:
+
+    The singleton design may limit concurrent processing or testing of separate AutoMLSystem configurations.
+
+Alternatives:
+
+    Allow multiple AutoMLSystem instances; however, this could lead to data conflicts and inefficient use of storage and memory.
+
+DSC-0009: Use of Artifact-Based Data Persistence
+
+    Date: 2024-10-15
+    Decision: Store data and metadata as artifacts, saved in structured directories.
+    Status: Accepted
+
+Motivation: To persist datasets, models, and other artifacts in a standardized format that can be loaded, saved, and organized consistently.
+
+Reason:
+
+    Uniform Structure: Using artifacts allows all data components (datasets, models, pipelines) to be managed consistently, easing retrieval and storage.
+    Extensible Data Management: Each artifact includes metadata (e.g., name, type, version), supporting robust data tracking and allowing each artifact to carry essential information about its creation.
+
+Limitations:
+
+    Directories must be well-maintained, as reliance on file-based artifacts could lead to difficulties if files are misplaced or renamed.
+
+Alternatives:
+
+    Use a relational or non-relational database for storing artifacts, which could improve scalability at the cost of implementation complexity.
+
+DSC-0010: Incremental Data Persistence for Database Entries
+
+    Date: 2024-10-15
+    Decision: Implement incremental data persistence in the Database class to prevent data loss and ensure data integrity.
+    Status: Accepted
+
+Motivation: To minimize memory usage and ensure data consistency by writing data to storage incrementally as changes are made.
+
+Reason:
+
+    Data Integrity: Each addition or modification in the database is saved immediately to prevent data loss in case of system failure.
+    Memory Optimization: Incremental storage writes reduce memory overhead by keeping only current data in memory.
+
+Limitations:
+
+    Saving data incrementally may cause slowdowns if entries are frequently modified, as each update requires a file operation.
+
+Alternatives:
+
+    Batch write all database updates at once; this would be less fault-tolerant and could lead to data loss if an unexpected failure occurs.
+
+DSC-0011: Streamlit Integration for Dataset and Pipeline Management
+
+    Date: 2024-10-15
+    Decision: Use Streamlit to provide a user interface for managing datasets, pipelines, and model configurations.
+    Status: Accepted
+
+Motivation: Streamlit offers a lightweight, interactive web interface for handling dataset selection, feature selection, and pipeline execution.
+
+Reason:
+
+    User-Friendly Interface: Streamlit simplifies the interaction with complex machine learning workflows, making the system accessible to users without deep programming knowledge.
+    Seamless Integration: Integrating directly with the AutoMLSystem, Streamlit allows real-time access to datasets and pipelines.
+
+Limitations:
+
+    Streamlit may be limiting for more complex UI requirements or highly interactive components that require JavaScript or more advanced frontend frameworks.
+
+Alternatives:
+
+    Develop a custom frontend using frameworks like React or Angular, which would provide more customization but require more development effort.
+
+DSC-0012: Use of Pydantic for Type Validation and Configuration
+
+    Date: 2024-10-15
+    Decision: Use Pydantic for data validation and configuration management across models, features, and artifacts.
+    Status: Accepted
+
+Motivation: Pydantic enforces strong type validation and provides a clear schema for model parameters, feature configurations, and dataset attributes.
+
+Reason:
+
+    Type Safety: Pydantic ensures that only valid types and values are used, reducing runtime errors and improving code reliability.
+    Schema Definition: Defining schemas using Pydantic simplifies configuration and validation for complex classes (e.g., Feature, Artifact).
+
+Limitations:
+
+    Pydantic's strict type enforcement can lead to rigidity, requiring explicit handling for unsupported or optional types.
+
+Alternatives:
+
+    Use native Python type hints and manual validation, which would reduce type safety and require additional validation logic.
+
+DSC-0013: Use of Metadata to Enrich Artifacts
+
+    Date: 2024-10-15
+    Decision: Include metadata in the Artifact class to store additional descriptive information.
+    Status: Accepted
+
+Motivation: Metadata provides essential context for each artifact, allowing artifacts to be easily identified, categorized, and retrieved based on their attributes.
+
+Reason:
+
+    Detailed Description: Metadata fields (e.g., tags, version, asset_path) store key information about each artifact, helping to differentiate artifacts of similar types and names.
+    Flexible Tagging: Allowing user-defined tags enables more flexible querying and filtering, making it easier to locate artifacts for specific use cases.
+
+Limitations:
+
+    Metadata fields may require manual updates, leading to the possibility of outdated or inaccurate information if not managed carefully.
+
+Alternatives:
+
+    Rely on the artifact name and file path alone to track artifacts, which would limit retrieval and context.
+
+DSC-0014: Support for Multiple Data Formats in Artifact Storage
+
+    Date: 2024-10-15
+    Decision: Implement support for multiple data formats (CSV, JSON, pickle, binary) in the Artifact class.
+    Status: Accepted
+
+Motivation: Supporting multiple formats allows the Artifact class to handle diverse data types, making it more versatile for different machine learning workflows.
+
+Reason:
+
+    Versatility: By supporting formats like CSV for datasets, JSON for metadata, and pickle for complex Python objects, the Artifact class can serve varied needs in machine learning workflows.
+    Automatic Detection: The load and save methods infer data format from file extensions, automating storage and retrieval processes.
+
+Limitations:
+
+    Managing multiple file formats increases complexity, especially when handling unsupported or non-standard formats.
+
+Alternatives:
+
+    Standardize on a single data format (e.g., pickle or JSON), which would simplify implementation but limit flexibility.
+
+DSC-0015: Automatic ID Generation and Path Normalization
+
+    Date: 2024-10-15
+    Decision: Automatically generate unique IDs and normalize paths for artifacts.
+    Status: Accepted
+
+Motivation: Unique IDs and consistent paths help in managing artifacts effectively by ensuring that each artifact can be uniquely identified and stored in a predictable location.
+
+Reason:
+
+    Uniqueness: Using a base64-encoded path as the artifact ID ensures that each artifact has a unique identifier, minimizing the risk of collisions.
+    Path Consistency: Normalizing paths across operating systems (forward slashes) simplifies file handling and prevents path inconsistencies.
+
+Limitations:
+
+    Generating base64-encoded paths can make ID strings long and hard to interpret visually.
+
+Alternatives:
+
+    Use simple, sequential IDs instead of encoding paths, which would simplify ID readability but reduce uniqueness and may require more tracking to avoid collisions.
+
+DSC-0016: Flexible Data Saving Based on Artifact Type
+
+    Date: 2024-10-15
+    Decision: Implement type-based data saving in the Artifact class, adapting the save behavior according to data type (e.g., DataFrame, dict, bytes).
+    Status: Accepted
+
+Motivation: Different data types require different storage formats, so the Artifact class needs to handle saving flexibly based on the artifact's data type.
+
+Reason:
+
+    Data-Type-Awareness: By checking the data type (e.g., DataFrame, bytes), the save method can determine the correct format (e.g., CSV, binary).
+    Streamlined File Management: Saving artifacts in the appropriate format ensures compatibility with later processing and retrieval steps, avoiding unnecessary conversion steps.
+
+Limitations:
+
+    Requires careful handling of unexpected data types to prevent save failures.
+
+Alternatives:
+
+    Use a standard binary format (pickle) for all data types, which would simplify the code but reduce flexibility in accessing artifact data outside the project.
+
+DSC-0017: Separate Metadata and Data File Handling
+
+    Date: 2024-10-15
+    Decision: Store metadata and data in separate files to maintain a clear separation between artifact information and its contents.
+    Status: Accepted
+
+Motivation: By storing metadata separately, the project allows for quick access to artifact descriptions without loading large data files.
+
+Reason:
+
+    Efficient Access: Keeping metadata in a lightweight JSON file allows for faster artifact indexing and retrieval without loading data files into memory.
+    Data Isolation: Separating metadata from actual data provides flexibility in organizing, modifying, or even relocating artifact data files independently.
+
+Limitations:
+
+    Separate file handling may require additional logic to ensure both metadata and data files are in sync.
+
+Alternatives:
+
+    Combine metadata and data into a single serialized file, which would simplify file management but slow down metadata access.
+
+DSC-0018: Validation and Error Handling for Artifact Loading
+
+    Date: 2024-10-15
+    Decision: Implement validation and error handling when loading artifacts to ensure data integrity and manage missing or corrupted files.
+    Status: Accepted
+
+Motivation: Ensure the integrity of data by handling errors like missing files, corrupted data, or incompatible formats gracefully.
+
+Reason:
+
+    Data Integrity Checks: Using validation steps (e.g., checking file extensions, ensuring path existence) ensures that artifacts are loaded as expected.
+    Graceful Error Handling: Catching and logging exceptions when loading files prevents abrupt failures and allows for debugging missing or corrupt data.
+
+Limitations:
+
+    Handling all possible error cases increases complexity, especially when dealing with varied file formats.
+
+Alternatives:
+
+    Use simple error handling that raises exceptions directly, which would reduce code complexity but increase the risk of unhandled errors during artifact loading.
+
+DSC-0019: Artifact-Based Pipeline Configuration Storage
+
+    Date: 2024-10-15
+    Decision: Use the Artifact class to store and manage pipeline configurations, saving both the pipeline structure and associated artifacts.
+    Status: Accepted
+
+Motivation: Storing pipeline configurations as artifacts allows for reusable and versioned pipelines that can be easily retrieved, updated, or re-run.
+
+Reason:
+
+    Pipeline Versioning: Storing pipeline configurations as artifacts supports version control, allowing users to maintain multiple versions of pipelines.
+    Artifact Compatibility: Each pipeline artifact includes details about models, features, and metrics, providing comprehensive context for each pipeline configuration.
+
+Limitations:
+
+    Pipelines with many nested artifacts may require additional logic to ensure consistency across all related artifact files.
+
+Alternatives:
+
+    Store pipelines as simple configuration files (e.g., JSON without artifact structure), which would reduce artifact consistency but make pipelines easier to manage manually.
+
+DSC-0020: Support for On-Demand Data Loading
+
+    Date: 2024-10-15
+    Decision: Implement on-demand data loading in the Artifact class, allowing data to be loaded only when accessed.
+    Status: Accepted
+
+Motivation: Loading data only when needed reduces memory usage and speeds up initial artifact access, especially when working with large datasets.
+
+Reason:
+
+    Resource Efficiency: Lazy loading of artifact data (e.g., loading a dataset only when read() is called) minimizes memory usage for operations that only need metadata.
+    Scalability: By deferring data loading, the system can handle large artifacts without initial performance degradation, supporting scalability for larger datasets.
+
+Limitations:
+
+    The on-demand loading approach may lead to slightly slower access times when the data is first accessed, especially for complex objects.
+
+Alternatives:
+
+    Load data immediately upon artifact instantiation, which would simplify the code but increase memory usage unnecessarily.
+
+
+DSC-0021: Streamlit Page for Dataset Management
+
+    Date: 2024-10-15
+    Decision: Implement a dedicated Streamlit page for managing datasets, including uploading, viewing, and deleting datasets.
+    Status: Accepted
+
+Motivation: Provide users with a straightforward interface for managing datasets, allowing them to upload, preview, and delete datasets without leaving the app.
+
+Reason:
+
+    User-Friendly Dataset Access: A dedicated dataset management page simplifies dataset interactions, making it easy for users to see and modify available datasets.
+    Direct Upload and Preview: By supporting file uploads and previewing the first few rows of data, users can quickly verify dataset content before proceeding.
+
+Limitations:
+
+    Limited file format support; only CSV files are accepted in the current implementation.
+
+Alternatives:
+
+    Integrate dataset management with other pages for a more consolidated UI, but this may complicate the layout and reduce usability for specific tasks.
+
+DSC-0022: Persistent Session State for Selected Dataset
+
+    Date: 2024-10-15
+    Decision: Store the selected dataset ID in Streamlit's session state to maintain the selected dataset across pages.
+    Status: Accepted
+
+Motivation: Preserving the selected dataset allows users to continue working with the same dataset across various Streamlit pages, improving the workflow continuity.
+
+Reason:
+
+    Workflow Consistency: By retaining the selected dataset in session state, users can switch between pages without needing to reselect their dataset.
+    Session-Based Management: Using session state provides an effective way to manage user selections, particularly useful in multi-page apps where users need to manage the same dataset across different steps.
+
+Limitations:
+
+    If users do not remember to select a dataset initially, they may encounter issues on other pages that require a dataset selection.
+
+Alternatives:
+
+    Prompt users to select a dataset each time they switch pages, but this would add repetitive actions and reduce usability.
+
+DSC-0023: Model Configuration Page with Dynamic Hyperparameter Input
+
+    Date: 2024-10-15
+    Decision: Use a Streamlit page to dynamically display hyperparameter input fields based on the selected model.
+    Status: Accepted
+
+Motivation: Models often have unique hyperparameters, so generating input fields dynamically allows each model's configuration to be customized without hardcoding fields.
+
+Reason:
+
+    Model-Specific Configuration: Dynamically generating hyperparameter input fields ensures the page displays only the relevant configuration options for the selected model.
+    Improved Flexibility: The ability to select models and configure hyperparameters dynamically allows the app to support new models with minimal changes to the UI.
+
+Limitations:
+
+    Requires careful management of hyperparameter validation to ensure values are within acceptable ranges for each model.
+
+Alternatives:
+
+    Use a fixed set of hyperparameter fields that accommodate all models, which would reduce complexity but may lead to cluttered or confusing UI.
+
+DSC-0024: Train-Test Split Selector with Visual Feedback
+
+    Date: 2024-10-15
+    Decision: Add a slider on the modeling page to select the train-test split, providing immediate visual feedback on the split percentages.
+    Status: Accepted
+
+Motivation: Allowing users to visually set the train-test split ratio improves the user experience and ensures users understand the data distribution.
+
+Reason:
+
+    Immediate Feedback: Displaying the test percentage next to the slider helps users verify their selection without needing additional explanations.
+    Easy Adjustments: A slider is intuitive for selecting ratios and makes it easy to experiment with different train-test splits, essential for optimizing model performance.
+
+Limitations:
+
+    The slider assumes a binary train-test split, so more complex splits (e.g., validation sets) would require additional customization.
+
+Alternatives:
+
+    Use text input for train-test split percentages, but this is less user-friendly and may lead to input errors.
+
+DSC-0025: Overview and Summary Page for Pipeline Execution
+
+    Date: 2024-10-15
+    Decision: Implement an overview page that summarizes all selected features, models, metrics, and pipeline configurations before training.
+    Status: Accepted
+
+Motivation: Providing a summary of selected configurations helps users review and confirm settings before starting model training, reducing errors.
+
+Reason:
+
+    User Confirmation: The summary page provides an opportunity for users to confirm their selections, reducing the likelihood of incorrect configurations or oversights.
+    Clear Presentation: Breaking down configuration details into sections (e.g., features, metrics, model) helps users see each choice clearly and makes the pipeline process more transparent.
+
+Limitations:
+
+    If there are many configurations or metrics, the summary can become lengthy and require scrolling.
+
+Alternatives:
+
+    Use tooltips or smaller summaries on each page, but this would scatter configuration details, making it harder for users to get an overall view before training.
+
+DSC-0026: Evaluation Metric Selection with Task-Specific Filtering
+
+    Date: 2024-10-15
+    Decision: Filter evaluation metrics on the modeling page based on the task type (classification or regression).
+    Status: Accepted
+
+Motivation: Different task types require different metrics, so filtering the options prevents users from selecting metrics that are irrelevant to their chosen task.
+
+Reason:
+
+    Contextual Relevance: Filtering metrics based on the task type ensures that only meaningful evaluation metrics are available, reducing user confusion.
+    Streamlined Interface: By only showing relevant metrics, the metric selection process is quicker, helping users make accurate selections for their models.
+
+Limitations:
+
+    Filtering may need to be updated as new metrics are added to ensure task-specific compatibility.
+
+Alternatives:
+
+    Show all metrics and rely on users to choose appropriately, which may result in incompatible metrics being selected.
+
+DSC-0027: Streamlit-Based Artifact Management Page
+
+    Date: 2024-10-15
+    Decision: Create an artifact management page that lists all available artifacts (e.g., datasets, models, pipelines) and allows viewing, selecting, and deleting.
+    Status: Accepted
+
+Motivation: Centralized artifact management simplifies browsing and interacting with artifacts, making it easier for users to find relevant items and manage storage.
+
+Reason:
+
+    Centralized Control: A dedicated page allows users to handle all artifact types in one place, reducing the need to navigate to multiple pages.
+    Easy Cleanup: Adding delete functionality allows users to remove outdated or unused artifacts, helping maintain a clean storage environment.
+
+Limitations:
+
+    Displaying large numbers of artifacts may affect UI performance, requiring pagination or filtering options.
+
+Alternatives:
+
+    Allow artifact management directly within other pages, though this could create a cluttered interface and reduce focus.
+
+DSC-0028: Real-Time Training Progress and Metric Display
+
+    Date: 2024-10-15
+    Decision: Display real-time updates on training progress and metrics to inform users of the model's performance as training proceeds.
+    Status: Accepted
+
+Motivation: Real-time updates give users insights into the training process, making the experience interactive and helping users adjust expectations.
+
+Reason:
+
+    Enhanced User Engagement: Seeing training progress and metrics as they are calculated gives users immediate feedback and keeps them engaged.
+    Early Results Insight: Displaying metrics as they are computed helps users determine model effectiveness early, potentially saving time if adjustments are needed.
+
+Limitations:
+
+    Training progress may not be truly real-time for complex models or large datasets due to Streamlit's inherent limitations in displaying updates.
+
+Alternatives:
+
+    Display metrics only after training completes, which would simplify implementation but reduce user engagement and immediate feedback.
+
+DSC-0029: Streamlit Page for Configuring and Saving Pipelines
+
+    Date: 2024-10-15
+    Decision: Provide a dedicated page to configure and save pipelines, including options to name, version, and persist pipeline configurations.
+    Status: Accepted
+
+Motivation: A dedicated page for configuring pipelines allows users to review settings, assign custom names, and save reusable pipeline configurations.
+
+Reason:
+
+    Pipeline Versioning: Allowing users to name and version pipelines supports better organization and version control for experimental or production workflows.
+    Reusable Configurations: Saved pipelines can be easily re-run with the same settings, allowing users to duplicate successful configurations or track changes over time.
+
+Limitations:
+
+    Users may need to manually manage pipeline names to avoid duplicates, as the system doesn’t enforce unique names.
+
+Alternatives:
+
+    Integrate pipeline configuration with model training on the modeling page, but this could make the page too complex and reduce pipeline reuse flexibility.
+
+DSC-0030: Error Handling and Validation Messages on Streamlit Pages
+
+    Date: 2024-10-15
+    Decision: Implement validation messages and error handling for inputs and selections across all Streamlit pages.
+    Status: Accepted
+
+Motivation: Validation and error handling help prevent user mistakes, making the application more reliable and user-friendly.
+
+Reason:
+
+    Improved User Experience: Clear error messages guide users to correct invalid inputs, reducing frustration and improving usability.
+    Data Integrity: By validating inputs (e.g., ensuring only supported data formats are uploaded), the application ensures data consistency and prevents invalid data from causing runtime issues.
+
+Limitations:
+
+    Extensive error handling may add code complexity and require regular updates as new validation requirements are introduced.
+
+Alternatives:
+
+    Minimal error handling that raises default errors, but this would lead to a less user-friendly experience and more potential data inconsistencies.
